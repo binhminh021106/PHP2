@@ -1,9 +1,9 @@
 <?php
-
 class Router
 {
     public function dispatch(string $uri): void
     {
+        var_dump($uri);
 
         $path = parse_url($uri, PHP_URL_PATH) ?? '';
         $path = trim($path, '/');
@@ -15,17 +15,18 @@ class Router
 
         $segments = $path === '' ? [] : explode('/', $path);
         $controllerName = ucfirst($segments[0] ?? 'home') . 'Controller';
+        var_dump($controllerName);
         $action = $segments[1] ?? 'index';
+        var_dump($action);
         $params = array_slice($segments, 2);
 
         if (!class_exists($controllerName)) {
-            $this->notFound('Class not exist');
+            $this->notFound("class not exist");
             return;
         }
-
-        $controller = new $controllerName;
+        $controller = new $controllerName();
         if (!method_exists($controller, $action)) {
-            $this->notFound('Class not exist');
+            $this->notFound("class not exist");
             return;
         }
 
@@ -42,6 +43,9 @@ class Router
     public function notFound($message): void
     {
         http_response_code(404);
-        echo "<h1> 404 Not Found - " . $message . "</h1>";
+        /**
+         * sau nay co the load theo view errors
+         */
+        echo "<h1 style='color: red'> 404 Not Found - ' . $message. </h1>";
     }
 }
