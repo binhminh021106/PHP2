@@ -1,23 +1,21 @@
-<?php
+<?php 
 
-class Database
-{
+class Database {
     public static $connection;
 
-    public static function getConnection()
-    {
+    public static function connect() {
         try {
-            $config = require APP_PATH."/config/config.php";
+            $config = require APP_PATH."/config/database.php";
             $host = $config['host'];
             $database = $config['database'];
             $username = $config['username'];
             $password = $config['password'];
-            $conn = new PDO("mysql:host=$host;dbname=$database", $username, $password);
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $connection = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+            $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             // echo "Connected successfully";
-            return $conn;
-        } catch (PDOException $e) {
+            return $connection;
+          } catch(PDOException $e) {
             echo "Connection failed: " . $e->getMessage();
-        }
+          }
     }
 }
