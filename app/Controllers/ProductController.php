@@ -13,8 +13,4 @@ class ProductController extends Controller
         ]);
     }
     
-    public function create() {
-        $title = "Thêm sản phẩm";
-        $this->view('AdminProduct/create', ['title' => $title]);
-    }
 }
