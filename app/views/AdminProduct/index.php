@@ -139,6 +139,8 @@
 
 <body>
 
+    <?php require_once VIEW_PATH . '/layout/admin/header.php'; ?>
+
     <div class="container pb-5">
         <!-- Header Controls -->
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -332,6 +334,9 @@
             </div>
         </div>
     </div>
+
+    <?php require_once VIEW_PATH . '/layout/admin/footer.php'; ?>
+
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
