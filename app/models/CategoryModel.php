@@ -15,17 +15,13 @@ class CategoryModel extends Model
 
     public function create($data = [])
     {
-        $now = date('Y-m-d H:i:s');
-
-        $sql = "INSERT INTO $this->table (name, description, icon, created_at, updated_at) VALUES (:name, :description, :icon, :created_at, :updated_at)";
+        $sql = "INSERT INTO $this->table (name, description, icon) VALUES (:name, :description, :icon)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'],
             'icon' => $data['icon'],
-            'created_at' => $now,
-            'updated_at' => $now,
         ]);
     }
 

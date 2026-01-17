@@ -43,6 +43,45 @@ class CategoryController extends Controller
         exit();
     }
 
+    public function edit($id)
+    {
+        $categoryModel = $this->model('CategoryModel');
+        $data = $categoryModel->show($id);
+
+        if (!$data) {
+            header('Location: /category/index');
+            exit();
+        }
+
+        $title = "Chỉnh sửa danh mục";
+        $this->view('AdminCategory/edit', [
+            'category' => $data, 
+            'title' => $title
+        ]);
+    }
+
+    public function update($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $name = trim($_POST['name']);
+            $description = trim($_POST['description']);
+            $icon = trim($_POST['icon']);
+
+            if (!empty($name)) {
+                $data = [
+                    'name' => $name,
+                    'description' => $description,
+                    'icon' => $icon
+                ];
+
+                $this->model('CategoryModel')->update($id, $data);
+            }
+        }
+
+        header('Location: /category/index');
+        exit();
+    }
+
     public function delete()
     {
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
