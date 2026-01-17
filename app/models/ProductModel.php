@@ -14,7 +14,8 @@ class ProductModel extends Model
 
     public function create($data = [])
     {
-        $sql = "INSERT INTO $this->table (name, price) VALUES (:name, :price)";
+        $sql = "INSERT INTO $this->table (name, category_id, description, is_active, slug, author, publisher, publication_year, img_thumbnail, price_regular, price_sale, content) 
+                                        VALUES (:name, :category_id, :description, :is_active, :slug, :author, :publisher, :publication_year, :img_thumbnail, :price_regular, :price_sale, :content)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
