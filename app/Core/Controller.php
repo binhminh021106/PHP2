@@ -1,34 +1,76 @@
 <?php
 
+use Jenssegers\Blade\Blade;
+
 class Controller
 {
-    public function view($path, $data)
+    public function view(string $view, array $data = []): void
     {
-        $viewFile = VIEW_PATH . "/$path" . ".php";
-        if (!file_exists($viewFile)) {
-            throw new Error("View file not found: " . $viewFile);
+        // Chuẩn hoá về dạng dot: "home/index" -> "home.index"
+        $normalizedView = $this->normalizeViewName($view);
+
+        // Map sang đường dẫn file để kiểm tra tồn tại
+        $viewPath = str_replace('.', '/', $normalizedView);
+
+        $candidates = [
+            VIEW_PATH . '/' . $viewPath . '.blade.php',
+            VIEW_PATH . '/' . $viewPath . '.blade', // nếu bạn thật sự có kiểu file này
+        ];
+
+        $found = null;
+        foreach ($candidates as $file) {
+            if (is_file($file)) {
+                $found = $file;
+                break;
+            }
         }
-        extract($data, EXTR_SKIP);
-        require $viewFile;
+
+        if (!$found) {
+            throw new RuntimeException("Blade view not found: {$view} (resolved: {$viewPath})");
+        }
+
+        $cachePath = BASE_PATH . '/storage/cache';
+        if (!is_dir($cachePath) && !mkdir($cachePath, 0775, true) && !is_dir($cachePath)) {
+            throw new RuntimeException("Cannot create cache directory: {$cachePath}");
+        }
+
+        // Quan trọng: truyền THƯ MỤC views, không truyền $viewPath
+        $blade = new Blade(VIEW_PATH, $cachePath);
+
+        echo $blade->render($normalizedView, $data);
     }
+
+    protected function normalizeViewName(string $view): string
+    {
+        $view = trim($view);
+        $view = str_replace(['\\', '/'], '.', $view);
+        $view = preg_replace('/\.+/', '.', $view);
+        return trim($view, '.');
+    }
+    // product ->
     public function model($name)
     {
         $class = ucfirst($name);
         if (!class_exists($class)) {
-            throw new Error("Model class not found: " . $class);
+            throw new Exception("class not found");
         }
         return new $class();
     }
+
     public function redirect($path)
     {
         $base = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
         $target = $base . '/' . ltrim($path, '/');
-        header("Location: $target");
-        exit();
+        header('Location: ' . $target);
+        exit;
     }
-    public function notfound($message): void
+
+    public function notFound($message): void
     {
         http_response_code(404);
-        echo "<h1>Controller Not Found - " . htmlspecialchars($message) . "</h1>";
+        /**
+         * sau nay co the load theo view errors
+         */
+        echo "controller Not Found - ' . $message. </h1>";
     }
 }
