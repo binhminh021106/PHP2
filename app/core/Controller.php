@@ -6,39 +6,18 @@ class Controller
 {
     public function view(string $view, array $data = []): void
     {
-        // Chuẩn hoá về dạng dot: "home/index" -> "home.index"
-        $normalizedView = $this->normalizeViewName($view);
+        $views = VIEW_PATH;
+        $cache = BASE_PATH . '/storage/cache';
 
-        // Map sang đường dẫn file để kiểm tra tồn tại
-        $viewPath = str_replace('.', '/', $normalizedView);
-
-        $candidates = [
-            VIEW_PATH . '/' . $viewPath . '.blade.php',
-            VIEW_PATH . '/' . $viewPath . '.blade', // nếu bạn thật sự có kiểu file này
-        ];
-
-        $found = null;
-        foreach ($candidates as $file) {
-            if (is_file($file)) {
-                $found = $file;
-                break;
-            }
+        if (!file_exists($cache)) {
+            mkdir($cache, 0777, true);
         }
 
-        if (!$found) {
-            throw new RuntimeException("Blade view not found: {$view} (resolved: {$viewPath})");
-        }
+        $blade = new Blade($views, $cache);
 
-        $cachePath = BASE_PATH . '/storage/cache';
-        if (!is_dir($cachePath) && !mkdir($cachePath, 0775, true) && !is_dir($cachePath)) {
-            throw new RuntimeException("Cannot create cache directory: {$cachePath}");
-        }
-
-        // Quan trọng: truyền THƯ MỤC views, không truyền $viewPath
-        $blade = new Blade(VIEW_PATH, $cachePath);
-
-        echo $blade->render($normalizedView, $data);
+        echo $blade->render($view, $data);
     }
+
 
     protected function normalizeViewName(string $view): string
     {
