@@ -24,6 +24,12 @@
             </a>
         </li>
         <li class="nav-item mb-1">
+            <a href="/brand/index" class="nav-link text-white {{ strpos($_SERVER['REQUEST_URI'], 'brands') !== false ? 'active' : '' }}">
+                <i class="fa-solid fa-box-open me-3" style="width: 20px;"></i>
+                Thương hiệu
+            </a>
+        </li>
+        <li class="nav-item mb-1">
             <a href="#" class="nav-link text-white">
                 <i class="fa-solid fa-users me-3" style="width: 20px;"></i>
                 Khách hàng
