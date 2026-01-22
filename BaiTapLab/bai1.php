@@ -72,7 +72,6 @@ class Student {
         
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
-                // Tự động tính xếp loại cho từng dòng dữ liệu
                 $row['xeploai'] = $this->calculateRank($row['diem']);
                 $data[] = $row;
             }

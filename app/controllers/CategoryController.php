@@ -36,6 +36,9 @@ class CategoryController extends Controller
                 ];
 
                 $this->model('CategoryModel')->create($data);
+
+                // Tạo thông báo thành công
+                $_SESSION['success'] = 'Thêm danh mục mới thành công!';
             }
         }
 
@@ -55,7 +58,7 @@ class CategoryController extends Controller
 
         $title = "Chỉnh sửa danh mục";
         $this->view('AdminCategory/edit', [
-            'category' => $data, 
+            'category' => $data,
             'title' => $title
         ]);
     }
@@ -75,6 +78,9 @@ class CategoryController extends Controller
                 ];
 
                 $this->model('CategoryModel')->update($id, $data);
+
+                // Tạo thông báo thành công
+                $_SESSION['success'] = 'Cập nhật danh mục thành công!';
             }
         }
 
@@ -88,6 +94,9 @@ class CategoryController extends Controller
             $id = $_POST['delete_id'];
             if (!empty($id)) {
                 $this->model('CategoryModel')->destroy($id);
+
+                // Tạo thông báo thành công
+                $_SESSION['success'] = 'Đã xóa danh mục thành công!';
             }
         }
 
