@@ -34,9 +34,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!empty($brands))
+                    @if (!empty($brand))
                     @php $i = 1; @endphp
-                    @foreach ($brands as $item)
+                    @foreach ($brand as $item)
                     <tr>
                         <td class="ps-3 fw-bold text-muted">#{{ $i++ }}</td>
                         <td>
