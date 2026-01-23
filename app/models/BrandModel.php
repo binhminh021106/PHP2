@@ -15,7 +15,7 @@ class BrandModel extends Model
 
     public function create($data = [])
     {
-        $sql = "INSERT INTO $this->table (name, image, description) VALUES (:name, :image)";
+        $sql = "INSERT INTO $this->table (name, image, description) VALUES (:name, :image, :description)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
