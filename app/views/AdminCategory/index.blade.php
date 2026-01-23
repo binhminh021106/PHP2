@@ -57,8 +57,7 @@
                                 class="btn btn-sm btn-outline-primary me-1" title="Sửa">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
-                            <button class="btn btn-sm btn-outline-danger"
-                                onclick="confirmDelete({{ $item['id'] }})" title="Xóa">
+                            <button class="btn btn-sm btn-outline-danger" data-id="{{ $item['id'] }}" title="Xóa">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
@@ -105,9 +104,12 @@
 <script>
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
 
-    function confirmDelete(id) {
-        document.getElementById('deleteIdInput').value = id;
-        deleteModal.show();
-    }
+    document.querySelectorAll('.btn-outline-danger').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            document.getElementById('deleteIdInput').value = id;
+            deleteModal.show();
+        });
+    });
 </script>
 @endsection
