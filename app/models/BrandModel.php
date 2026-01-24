@@ -31,7 +31,7 @@ class BrandModel extends Model
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         $stmt->execute(['id' => $id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function update($id, $data = [])
