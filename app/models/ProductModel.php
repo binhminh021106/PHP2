@@ -18,15 +18,15 @@ class ProductModel extends Model
 
         try {
 
-            $sqlProduct = "INSERT INTO $this->table (name, category_id, description, is_active, slug, author, publisher, publication_year, img_thumbnail, price_regular, price_sale, content) 
-                                        VALUES (:name, :category_id, :description, :is_active, :slug, :author, :publisher, :publication_year, :img_thumbnail, :price_regular, :price_sale, :content)";
+            $sqlProduct = "INSERT INTO $this->table (name, category_id, description, status, slug, author, publisher, publication_year, img_thumbnail, price_regular, price_sale, content) 
+                                        VALUES (:name, :category_id, :description, :status, :slug, :author, :publisher, :publication_year, :img_thumbnail, :price_regular, :price_sale, :content)";
 
             $stmt = $conn->prepare($sqlProduct);
             $stmt->execute([
                 'name' => $data['name'],
                 'category_id' => $data['category_id'],
                 'description' => $data['description'],
-                'is_active' => $data['is_active'],
+                'status' => $data['status'],
                 'slug' => $data['slug'],
                 'author' => $data['author'],
                 'publisher' => $data['publisher'],
@@ -40,40 +40,40 @@ class ProductModel extends Model
             $productId = $conn->lastInsertId();
 
             if (!empty($variants)) {
-            $sqlVariant = "INSERT INTO product_variants 
+                $sqlVariant = "INSERT INTO product_variants 
                 (product_id, sku, price, regular_price, quantity, attributes, image) 
                 VALUES 
                 (:pid, :sku, :price, :reg_price, :qty, :attr, :img)";
-                
-            $stmtVar = $conn->prepare($sqlVariant);
 
-            foreach ($variants as $variant) {
-                $stmtVar->execute([
-                    'pid'       => $productId,
-                    'sku'       => $variant['sku'] ?? null,
-                    'price'     => $variant['price'],
-                    'reg_price' => $variant['regular_price'] ?? null,
-                    'qty'       => $variant['quantity'] ?? 0,
-                    'attr'      => json_encode($variant['attributes'], JSON_UNESCAPED_UNICODE),
-                    'img'       => $variant['image'] ?? null 
-                ]);
+                $stmtVar = $conn->prepare($sqlVariant);
+
+                foreach ($variants as $variant) {
+                    $stmtVar->execute([
+                        'pid'       => $productId,
+                        'sku'       => $variant['sku'] ?? null,
+                        'price'     => $variant['price'],
+                        'reg_price' => $variant['regular_price'] ?? null,
+                        'qty'       => $variant['quantity'] ?? 0,
+                        'attr'      => json_encode($variant['attributes'], JSON_UNESCAPED_UNICODE),
+                        'img'       => $variant['image'] ?? null
+                    ]);
+                }
             }
-        }
 
-        if (!empty($galleryImages)) {
-            $sqlImg = "INSERT INTO product_images (product_id, image_path) VALUES (:pid, :path)";
-            $stmtImg = $conn->prepare($sqlImg);
+            if (!empty($galleryImages)) {
+                $sqlImg = "INSERT INTO product_images (product_id, image_path) VALUES (:pid, :path)";
+                $stmtImg = $conn->prepare($sqlImg);
 
-            foreach ($galleryImages as $path) {
-                $stmtImg->execute([
-                    'pid'  => $productId,
-                    'path' => $path
-                ]);
+                foreach ($galleryImages as $path) {
+                    $stmtImg->execute([
+                        'pid'  => $productId,
+                        'path' => $path
+                    ]);
+                }
             }
-        }
 
-        $conn->commit();
-        return true;
+            $conn->commit();
+            return true;
         } catch (Exception $e) {
             $conn->rollBack();
 
@@ -105,9 +105,14 @@ class ProductModel extends Model
 
     public function destroy($id)
     {
-        $sql = "DELETE FROM $this->table WHERE id = :id";
+        $now = date('Y-m-d H:i:s');
+
+        $sql = "INSERT INTO $this->table (deleted_at) VALUES (:deleted_at) WHERE id = :id";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
-        return $stmt->execute(['id' => $id]);
+        return $stmt->execute([
+            'deleted_at' => $now,
+            'id' => $id
+        ]);
     }
 }
