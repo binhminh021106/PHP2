@@ -12,21 +12,21 @@
         </a>
     </div>
 
-    <!-- Thông báo thành công/lỗi -->
-    @if(isset($_SESSION['success']))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fa-solid fa-check-circle me-2"></i>{{ $_SESSION['success'] }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            @php unset($_SESSION['success']); @endphp
-        </div>
-    @endif
-
-    @if(isset($_SESSION['error']))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ $_SESSION['error'] }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            @php unset($_SESSION['error']); @endphp
-        </div>
+    <!-- SweetAlert Success Notification -->
+    @if(!empty($success_msg))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: "{{ $success_msg }}",
+                timer: 3000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        });
+    </script>
     @endif
 
     <!-- Bảng dữ liệu -->
@@ -108,13 +108,14 @@
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                         
-                                        <!-- Form xóa -->
-                                        <form action="/product/delete" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
-                                            <input type="hidden" name="delete_id" value="{{ $product['id'] }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <!-- Nút xóa đã sửa: Sử dụng data attributes để tránh lỗi cú pháp -->
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                data-id="{{ $product['id'] }}"
+                                                data-name="{{ $product['name'] }}"
+                                                onclick="confirmDelete(this)" 
+                                                title="Xóa">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -133,4 +134,38 @@
         </div>
     </div>
 </div>
+
+<!-- Form Ẩn dùng để Submit xóa -->
+<form id="deleteProductForm" method="POST" action="/product/delete" style="display: none;">
+    <input type="hidden" name="delete_id" id="deleteProductIdInput">
+</form>
+
+@endsection
+
+@section('scripts')
+<script>
+    // Hàm nhận vào element button (el) thay vì tham số rời rạc
+    function confirmDelete(el) {
+        // Lấy dữ liệu từ data attribute
+        var id = el.getAttribute('data-id');
+        var name = el.getAttribute('data-name');
+
+        Swal.fire({
+            title: 'Bạn chắc chắn chứ?',
+            text: "Xóa sản phẩm '" + name + "' sẽ không thể hoàn tác!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Vẫn xóa!',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Đưa ID vào form và submit
+                document.getElementById('deleteProductIdInput').value = id;
+                document.getElementById('deleteProductForm').submit();
+            }
+        });
+    }
+</script>
 @endsection

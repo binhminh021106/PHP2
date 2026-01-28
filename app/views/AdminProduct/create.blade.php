@@ -9,49 +9,76 @@
             <h5 class="mb-0">Thêm Mới Sản Phẩm</h5>
         </div>
         <div class="card-body">
+            <!-- Hiển thị lỗi tổng quan nếu có -->
+            @if(isset($errors['system']))
+                <div class="alert alert-danger">{{ $errors['system'] }}</div>
+            @endif
+
             <form action="/product/store" method="POST" enctype="multipart/form-data">
 
                 <!-- 1. Thông tin chung -->
                 <div class="row mb-4">
                     <div class="col-md-8">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Tên sản phẩm *</label>
-                            <input type="text" name="name" class="form-control" required placeholder="Nhập tên sản phẩm...">
+                            <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input type="text" name="name" 
+                                   class="form-control {{ isset($errors['name']) ? 'is-invalid' : '' }}" 
+                                   value="{{ $old['name'] ?? '' }}" 
+                                   placeholder="Nhập tên sản phẩm...">
+                            @if(isset($errors['name']))
+                                <div class="invalid-feedback">{{ $errors['name'] }}</div>
+                            @endif
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Danh mục</label>
-                                <select name="category_id" class="form-select">
+                                <label class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
+                                <select name="category_id" class="form-select {{ isset($errors['category_id']) ? 'is-invalid' : '' }}">
+                                    <option value="">-- Chọn danh mục --</option>
                                     @foreach($categories as $cat)
-                                    <option value="{{ $cat['id'] }}">{{ $cat['name'] }}</option>
+                                    <option value="{{ $cat['id'] }}" {{ (isset($old['category_id']) && $old['category_id'] == $cat['id']) ? 'selected' : '' }}>
+                                        {{ $cat['name'] }}
+                                    </option>
                                     @endforeach
                                 </select>
+                                @if(isset($errors['category_id']))
+                                    <div class="invalid-feedback">{{ $errors['category_id'] }}</div>
+                                @endif
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Trạng thái</label>
                                 <select name="status" class="form-select">
-                                    <option value="active">Đang bán</option>
-                                    <option value="inactive">Ngừng bán</option>
+                                    <option value="active" {{ (isset($old['status']) && $old['status'] == 'active') ? 'selected' : '' }}>Đang bán</option>
+                                    <option value="inactive" {{ (isset($old['status']) && $old['status'] == 'inactive') ? 'selected' : '' }}>Ngừng bán</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Giá gốc</label>
-                                <input type="number" name="price_regular" class="form-control" value="0">
+                                <label class="form-label fw-bold">Giá gốc <span class="text-danger">*</span></label>
+                                <input type="number" name="price_regular" 
+                                       class="form-control {{ isset($errors['price_regular']) ? 'is-invalid' : '' }}" 
+                                       value="{{ $old['price_regular'] ?? 0 }}">
+                                @if(isset($errors['price_regular']))
+                                    <div class="invalid-feedback">{{ $errors['price_regular'] }}</div>
+                                @endif
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Giá khuyến mãi</label>
-                                <input type="number" name="price_sale" class="form-control" value="0">
+                                <input type="number" name="price_sale" 
+                                       class="form-control {{ isset($errors['price_sale']) ? 'is-invalid' : '' }}" 
+                                       value="{{ $old['price_sale'] ?? 0 }}">
+                                @if(isset($errors['price_sale']))
+                                    <div class="invalid-feedback">{{ $errors['price_sale'] }}</div>
+                                @endif
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Mô tả ngắn</label>
-                            <textarea name="description" class="form-control" rows="3"></textarea>
+                            <textarea name="description" class="form-control" rows="3">{{ $old['description'] ?? '' }}</textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nội dung chi tiết</label>
-                            <textarea name="content" class="form-control" rows="5"></textarea>
+                            <textarea name="content" class="form-control" rows="5">{{ $old['content'] ?? '' }}</textarea>
                         </div>
                     </div>
 
@@ -99,7 +126,7 @@
                             <tbody id="variantContainer">
                                 <!-- Dòng mẫu mặc định -->
                                 <tr>
-                                    <td><input type="text" name="variant_sku[]" class="form-control form-control-sm" required placeholder="SKU-001"></td>
+                                    <td><input type="text" name="variant_sku[]" class="form-control form-control-sm" placeholder="SKU-001"></td>
                                     <td>
                                         <div class="d-flex gap-1">
                                             <input type="text" name="variant_color[]" class="form-control form-control-sm" placeholder="Màu (Đỏ)">
@@ -129,7 +156,7 @@
     document.getElementById('btnAddVariant').addEventListener('click', function() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" name="variant_sku[]" class="form-control form-control-sm" required></td>
+            <td><input type="text" name="variant_sku[]" class="form-control form-control-sm"></td>
             <td>
                 <div class="d-flex gap-1">
                     <input type="text" name="variant_color[]" class="form-control form-control-sm" placeholder="Màu">
