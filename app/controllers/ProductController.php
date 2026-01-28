@@ -22,7 +22,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = $this->categoryModel->index(); // Lấy danh mục để select
+        $categories = $this->categoryModel->index();
         $this->view('AdminProduct.create', [
             'categories' => $categories,
             'title' => 'Thêm mới sản phẩm'
@@ -32,7 +32,6 @@ class ProductController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // 1. Dữ liệu cơ bản
             $data = [
                 'name' => $_POST['name'],
                 'slug' => $this->createSlug($_POST['name']),
@@ -45,17 +44,14 @@ class ProductController extends Controller
                 'img_thumbnail' => null
             ];
 
-            // 2. Upload Thumbnail
             if (!empty($_FILES['img_thumbnail']['name'])) {
                 $data['img_thumbnail'] = $this->uploadFile($_FILES['img_thumbnail'], 'products');
             }
 
-            // 3. Xử lý Variants
             $variants = [];
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
                     $varImg = null;
-                    // Upload ảnh riêng cho variant nếu có
                     if (!empty($_FILES['variant_image']['name'][$key])) {
                         $file = [
                             'name' => $_FILES['variant_image']['name'][$key],
@@ -67,7 +63,6 @@ class ProductController extends Controller
                         $varImg = $this->uploadFile($file, 'variants');
                     }
 
-                    // Gộp thuộc tính thành JSON (Ví dụ: Màu:Đỏ, Size:XL)
                     $attributes = [
                         'Color' => $_POST['variant_color'][$key] ?? '',
                         'Size' => $_POST['variant_size'][$key] ?? ''
@@ -83,7 +78,6 @@ class ProductController extends Controller
                 }
             }
 
-            // 4. Xử lý Gallery (Nhiều ảnh)
             $gallery = [];
             if (!empty($_FILES['gallery']['name'][0])) {
                 $count = count($_FILES['gallery']['name']);
@@ -100,7 +94,6 @@ class ProductController extends Controller
                 }
             }
 
-            // Gọi Model
             if ($this->productModel->createProduct($data, $variants, $gallery)) {
                 $_SESSION['success'] = "Thêm sản phẩm thành công!";
                 header("Location: /product/index");
@@ -128,7 +121,6 @@ class ProductController extends Controller
     public function update($id)
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // Lấy data cũ để check ảnh
             $oldProduct = $this->productModel->getById($id);
 
             $data = [
@@ -143,12 +135,10 @@ class ProductController extends Controller
                 'img_thumbnail' => null
             ];
 
-            // Nếu upload ảnh mới thì lấy, không thì null (model sẽ check)
             if (!empty($_FILES['img_thumbnail']['name'])) {
                 $data['img_thumbnail'] = $this->uploadFile($_FILES['img_thumbnail'], 'products');
             }
 
-            // Xử lý Variants (Logic tương tự create)
             $variants = [];
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
@@ -180,7 +170,6 @@ class ProductController extends Controller
                 }
             }
 
-            // Gallery Mới
             $newGallery = [];
             if (!empty($_FILES['gallery']['name'][0])) {
                 $count = count($_FILES['gallery']['name']);
@@ -197,7 +186,6 @@ class ProductController extends Controller
                 }
             }
 
-            // Ảnh gallery cần xóa
             $deletedGalleryIds = $_POST['delete_gallery_ids'] ?? [];
 
             if ($this->productModel->updateProduct($id, $data, $variants, $newGallery, $deletedGalleryIds)) {
@@ -219,7 +207,6 @@ class ProductController extends Controller
         }
     }
 
-    // --- Helpers ---
     private function uploadFile($file, $folder)
     {
         $targetDir = "storage/uploads/$folder/";

@@ -46,7 +46,7 @@ class ProductModel extends Model
     {
         $conn = $this->connect();
         try {
-            $conn->beginTransaction(); // Bắt đầu transaction
+            $conn->beginTransaction();
 
             // 1. Insert Product
             $sql = "INSERT INTO products (name, slug, category_id, price_regular, price_sale, 
@@ -68,7 +68,6 @@ class ProductModel extends Model
             
             $productId = $conn->lastInsertId();
 
-            // 2. Insert Variants
             if (!empty($variants)) {
                 $sqlVar = "INSERT INTO product_variants (product_id, sku, price, quantity, attributes, image) 
                            VALUES (:pid, :sku, :price, :qty, :attr, :img)";
@@ -80,13 +79,12 @@ class ProductModel extends Model
                         'sku' => $var['sku'],
                         'price' => $var['price'],
                         'qty' => $var['quantity'],
-                        'attr' => $var['attributes'], // JSON string
+                        'attr' => $var['attributes'],
                         'img' => $var['image']
                     ]);
                 }
             }
 
-            // 3. Insert Gallery
             if (!empty($gallery)) {
                 $sqlGal = "INSERT INTO product_images (product_id, image_path) VALUES (:pid, :path)";
                 $stmtGal = $conn->prepare($sqlGal);
@@ -95,29 +93,27 @@ class ProductModel extends Model
                 }
             }
 
-            $conn->commit(); // Lưu thành công
+            $conn->commit();
             return true;
 
         } catch (Exception $e) {
-            $conn->rollBack(); // Hoàn tác nếu lỗi
+            $conn->rollBack(); 
             error_log("Create Product Error: " . $e->getMessage());
             return false;
         }
     }
 
-    // Cập nhật Full
+    // Cập nhật 
     public function updateProduct($id, $data, $newVariants = [], $newGallery = [], $deletedGalleryIds = [])
     {
         $conn = $this->connect();
         try {
             $conn->beginTransaction();
 
-            // 1. Update Product Info
             $sql = "UPDATE products SET name=:name, slug=:slug, category_id=:cat_id, 
                     price_regular=:price, price_sale=:sale, description=:desc, 
                     content=:content, status=:status, updated_at=NOW()";
             
-            // Nếu có ảnh mới thì update, không thì giữ nguyên
             if (!empty($data['img_thumbnail'])) {
                 $sql .= ", img_thumbnail=:thumb";
             }
@@ -136,9 +132,6 @@ class ProductModel extends Model
             $stmt = $conn->prepare($sql);
             $stmt->execute($params);
 
-            // 2. Xử lý Variants (Xóa cũ thêm mới cho đơn giản, hoặc update nếu làm kỹ hơn)
-            // Ở đây tôi chọn cách xóa hết biến thể cũ của sản phẩm này và thêm lại danh sách mới để tránh phức tạp logic ID
-            // Lưu ý: Cách này sẽ làm mất ID cũ của variant. Nếu cần giữ ID thì phải code logic check update/insert riêng.
             $conn->exec("DELETE FROM product_variants WHERE product_id = $id");
 
             if (!empty($newVariants)) {
@@ -158,8 +151,6 @@ class ProductModel extends Model
                 }
             }
 
-            // 3. Xử lý Gallery
-            // Thêm ảnh mới
             if (!empty($newGallery)) {
                 $sqlGal = "INSERT INTO product_images (product_id, image_path) VALUES (:pid, :path)";
                 $stmtGal = $conn->prepare($sqlGal);
@@ -167,9 +158,7 @@ class ProductModel extends Model
                     $stmtGal->execute(['pid' => $id, 'path' => $path]);
                 }
             }
-            // Xóa ảnh cũ được yêu cầu
             if (!empty($deletedGalleryIds)) {
-                // Chuyển mảng ID thành chuỗi an toàn
                 $ids = implode(',', array_map('intval', $deletedGalleryIds));
                 $conn->exec("DELETE FROM product_images WHERE id IN ($ids)");
             }
@@ -184,7 +173,6 @@ class ProductModel extends Model
         }
     }
 
-    // Xóa mềm (Soft Delete)
     public function softDelete($id)
     {
         $conn = $this->connect();
