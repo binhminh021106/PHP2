@@ -7,17 +7,32 @@ class CategoryController extends Controller
         $category = $this->model('CategoryModel');
         $data = $category->index();
         $title = "Quản lí danh mục";
+
+        $successMsg = '';
+        if (isset($_SESSION['success'])) {
+            $successMsg = $_SESSION['success'];
+            unset($_SESSION['success']);
+        }
+
         $this->view('AdminCategory/index', [
             'category' => $data,
-            'title' => $title
+            'title' => $title,
+            'success_msg' => $successMsg
         ]);
     }
 
     public function create()
     {
         $title = "Thêm danh mục mới";
+
+        $errors = $_SESSION['errors'] ?? [];
+        $old = $_SESSION['old'] ?? [];
+        unset($_SESSION['errors'], $_SESSION['old']);
+
         $this->view('AdminCategory/create', [
-            'title' => $title
+            'title' => $title,
+            'errors' => $errors,
+            'old' => $old
         ]);
     }
 
@@ -28,22 +43,37 @@ class CategoryController extends Controller
             $description = trim($_POST['description']);
             $icon = trim($_POST['icon']);
 
-            if (!empty($name)) {
-                $data = [
-                    'name' => $name,
-                    'description' => $description,
-                    'icon' => $icon
-                ];
-
-                $this->model('CategoryModel')->create($data);
-
-                // Tạo thông báo thành công
-                $_SESSION['success'] = 'Thêm danh mục mới thành công!';
+            $errors = [];
+            if (empty($name)) {
+                $errors['name'] = "Vui lòng nhập tên danh mục.";
             }
-        }
 
-        header('Location: /category/index');
-        exit();
+            if (empty($icon)) {
+                $errors['icon'] = "Vui lòng nhập class icon (ví dụ: fa-solid fa-laptop).";
+            }
+
+            if (!empty($errors)) {
+                $_SESSION['errors'] = $errors;
+                $_SESSION['old'] = $_POST;
+                header('Location: /category/create');
+                exit();
+            }
+
+            $data = [
+                'name' => $name,
+                'description' => $description,
+                'icon' => $icon
+            ];
+
+            if ($this->model('CategoryModel')->create($data)) {
+                $_SESSION['success'] = 'Thêm danh mục mới thành công!';
+                header('Location: /category/index');
+            } else {
+                $_SESSION['errors']['system'] = "Lỗi hệ thống, vui lòng thử lại.";
+                header('Location: /category/create');
+            }
+            exit();
+        }
     }
 
     public function edit($id)
@@ -56,10 +86,14 @@ class CategoryController extends Controller
             exit();
         }
 
+        $errors = $_SESSION['errors'] ?? [];
+        unset($_SESSION['errors']);
+
         $title = "Chỉnh sửa danh mục";
         $this->view('AdminCategory/edit', [
             'category' => $data,
-            'title' => $title
+            'title' => $title,
+            'errors' => $errors
         ]);
     }
 
@@ -70,22 +104,36 @@ class CategoryController extends Controller
             $description = trim($_POST['description']);
             $icon = trim($_POST['icon']);
 
-            if (!empty($name)) {
-                $data = [
-                    'name' => $name,
-                    'description' => $description,
-                    'icon' => $icon
-                ];
-
-                $this->model('CategoryModel')->update($id, $data);
-
-                // Tạo thông báo thành công
-                $_SESSION['success'] = 'Cập nhật danh mục thành công!';
+            // --- VALIDATE ---
+            $errors = [];
+            if (empty($name)) {
+                $errors['name'] = "Vui lòng nhập tên danh mục.";
             }
-        }
+            if (empty($icon)) {
+                $errors['icon'] = "Vui lòng nhập class icon.";
+            }
 
-        header('Location: /category/index');
-        exit();
+            if (!empty($errors)) {
+                $_SESSION['errors'] = $errors;
+                header("Location: /category/edit/$id");
+                exit();
+            }
+
+            $data = [
+                'name' => $name,
+                'description' => $description,
+                'icon' => $icon
+            ];
+
+            if ($this->model('CategoryModel')->update($id, $data)) {
+                $_SESSION['success'] = 'Cập nhật danh mục thành công!';
+                header('Location: /category/index');
+            } else {
+                $_SESSION['errors']['system'] = "Cập nhật thất bại.";
+                header("Location: /category/edit/$id");
+            }
+            exit();
+        }
     }
 
     public function delete()
@@ -94,12 +142,9 @@ class CategoryController extends Controller
             $id = $_POST['delete_id'];
             if (!empty($id)) {
                 $this->model('CategoryModel')->destroy($id);
-
-                // Tạo thông báo thành công
                 $_SESSION['success'] = 'Đã xóa danh mục thành công!';
             }
         }
-
         header('Location: /category/index');
         exit();
     }

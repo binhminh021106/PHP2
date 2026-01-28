@@ -14,30 +14,75 @@ class ProductController extends Controller
     public function index()
     {
         $products = $this->productModel->getAll();
+        
+        $successMsg = '';
+        if (isset($_SESSION['success'])) {
+            $successMsg = $_SESSION['success'];
+            unset($_SESSION['success']);
+        }
+
         $this->view('AdminProduct.index', [
             'products' => $products,
-            'title' => 'Quản lý sản phẩm'
+            'title' => 'Quản lý sản phẩm',
+            'success_msg' => $successMsg
         ]);
     }
 
     public function create()
     {
         $categories = $this->categoryModel->index();
+        
+        $errors = $_SESSION['errors'] ?? [];
+        $old = $_SESSION['old'] ?? [];
+        unset($_SESSION['errors'], $_SESSION['old']);
+
         $this->view('AdminProduct.create', [
             'categories' => $categories,
-            'title' => 'Thêm mới sản phẩm'
+            'title' => 'Thêm mới sản phẩm',
+            'errors' => $errors,
+            'old' => $old
         ]);
     }
 
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $name = trim($_POST['name']);
+            $price_regular = $_POST['price_regular'];
+            $price_sale = $_POST['price_sale'];
+            $category_id = $_POST['category_id'];
+            
+            $errors = [];
+
+            if (empty($name)) {
+                $errors['name'] = "Tên sản phẩm không được để trống.";
+            }
+
+            if ($price_regular == '' || $price_regular < 0) {
+                $errors['price_regular'] = "Giá gốc phải là số dương.";
+            }
+
+            if ($price_sale != '' && $price_sale < 0) {
+                $errors['price_sale'] = "Giá khuyến mãi không được âm.";
+            }
+
+            if (empty($category_id)) {
+                $errors['category_id'] = "Vui lòng chọn danh mục.";
+            }
+
+            if (!empty($errors)) {
+                $_SESSION['errors'] = $errors;
+                $_SESSION['old'] = $_POST;
+                header("Location: /product/create");
+                exit();
+            }
+
             $data = [
-                'name' => $_POST['name'],
-                'slug' => $this->createSlug($_POST['name']),
-                'category_id' => $_POST['category_id'],
-                'price_regular' => $_POST['price_regular'] ?? 0,
-                'price_sale' => $_POST['price_sale'] ?? 0,
+                'name' => $name,
+                'slug' => $this->createSlug($name),
+                'category_id' => $category_id,
+                'price_regular' => $price_regular,
+                'price_sale' => $price_sale,
                 'description' => $_POST['description'],
                 'content' => $_POST['content'],
                 'status' => $_POST['status'] ?? 'inactive',
@@ -51,6 +96,8 @@ class ProductController extends Controller
             $variants = [];
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
+                    if (empty($sku)) continue; 
+
                     $varImg = null;
                     if (!empty($_FILES['variant_image']['name'][$key])) {
                         $file = [
@@ -98,9 +145,10 @@ class ProductController extends Controller
                 $_SESSION['success'] = "Thêm sản phẩm thành công!";
                 header("Location: /product/index");
             } else {
-                $_SESSION['error'] = "Lỗi hệ thống!";
+                $_SESSION['error'] = "Lỗi hệ thống khi lưu sản phẩm!";
                 header("Location: /product/create");
             }
+            exit();
         }
     }
 
@@ -111,24 +159,44 @@ class ProductController extends Controller
 
         $categories = $this->categoryModel->index();
 
+        $errors = $_SESSION['errors'] ?? [];
+        unset($_SESSION['errors']);
+
         $this->view('AdminProduct.edit', [
             'product' => $product,
             'categories' => $categories,
-            'title' => 'Cập nhật sản phẩm'
+            'title' => 'Cập nhật sản phẩm',
+            'errors' => $errors
         ]);
     }
 
     public function update($id)
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $oldProduct = $this->productModel->getById($id);
+            $name = trim($_POST['name']);
+            $price_regular = $_POST['price_regular'];
+            $price_sale = $_POST['price_sale'];
+            
+            $errors = [];
+            if (empty($name)) {
+                $errors['name'] = "Tên sản phẩm không được để trống.";
+            }
+            if ($price_regular == '' || $price_regular < 0) {
+                $errors['price_regular'] = "Giá gốc không hợp lệ.";
+            }
+
+            if (!empty($errors)) {
+                $_SESSION['errors'] = $errors;
+                header("Location: /product/edit/$id");
+                exit();
+            }
 
             $data = [
-                'name' => $_POST['name'],
-                'slug' => $this->createSlug($_POST['name']),
+                'name' => $name,
+                'slug' => $this->createSlug($name),
                 'category_id' => $_POST['category_id'],
-                'price_regular' => $_POST['price_regular'],
-                'price_sale' => $_POST['price_sale'],
+                'price_regular' => $price_regular,
+                'price_sale' => $price_sale,
                 'description' => $_POST['description'],
                 'content' => $_POST['content'],
                 'status' => $_POST['status'],
@@ -142,7 +210,9 @@ class ProductController extends Controller
             $variants = [];
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
-                    $varImg = $_POST['existing_variant_image'][$key] ?? null; // Giữ ảnh cũ
+                    if (empty($sku)) continue;
+                    
+                    $varImg = $_POST['existing_variant_image'][$key] ?? null;
 
                     if (!empty($_FILES['variant_image']['name'][$key])) {
                         $file = [
@@ -189,12 +259,13 @@ class ProductController extends Controller
             $deletedGalleryIds = $_POST['delete_gallery_ids'] ?? [];
 
             if ($this->productModel->updateProduct($id, $data, $variants, $newGallery, $deletedGalleryIds)) {
-                $_SESSION['success'] = "Cập nhật thành công!";
+                $_SESSION['success'] = "Cập nhật sản phẩm thành công!";
                 header("Location: /product/index");
             } else {
                 $_SESSION['error'] = "Cập nhật thất bại!";
                 header("Location: /product/edit/$id");
             }
+            exit();
         }
     }
 
@@ -202,8 +273,9 @@ class ProductController extends Controller
     {
         if (isset($_POST['delete_id'])) {
             $this->productModel->softDelete($_POST['delete_id']);
-            $_SESSION['success'] = "Đã xóa sản phẩm!";
+            $_SESSION['success'] = "Đã xóa sản phẩm thành công!";
             header("Location: /product/index");
+            exit();
         }
     }
 

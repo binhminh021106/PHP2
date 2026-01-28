@@ -31,9 +31,13 @@
                             </label>
                             <div class="input-group input-group-lg">
                                 <span class="input-group-text bg-light text-warning"><i class="fa-solid fa-tag"></i></span>
-                                <input type="text" class="form-control bg-light" id="name" name="name"
-                                    value="{{ $category['name'] ?? '' }}" required
-                                    placeholder="Ví dụ: Laptop, Điện thoại..." style="font-size: 0.95rem;">
+                                <input type="text" class="form-control bg-light {{ isset($errors['name']) ? 'is-invalid' : '' }}" 
+                                       id="name" name="name"
+                                       value="{{ $category['name'] ?? '' }}" 
+                                       placeholder="Ví dụ: Laptop, Điện thoại..." style="font-size: 0.95rem;">
+                                @if(isset($errors['name']))
+                                    <div class="invalid-feedback">{{ $errors['name'] }}</div>
+                                @endif
                             </div>
                         </div>
 
@@ -46,18 +50,19 @@
 
                         {{-- Icon --}}
                         <div class="mb-4">
-                            <label for="icon" class="form-label fw-bold text-dark">Icon hiển thị</label>
+                            <label for="icon" class="form-label fw-bold text-dark">Icon hiển thị <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-warning"><i class="fa-solid fa-icons"></i></span>
-                                <input type="text" class="form-control bg-light" id="icon" name="icon"
-                                    value="{{ $category['icon'] ?? '' }}"
-                                    placeholder="Ví dụ: fa-solid fa-laptop">
+                                <input type="text" class="form-control bg-light {{ isset($errors['icon']) ? 'is-invalid' : '' }}" 
+                                       id="icon" name="icon"
+                                       value="{{ $category['icon'] ?? '' }}"
+                                       placeholder="Ví dụ: fa-solid fa-laptop">
                                 <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" class="btn btn-outline-secondary" title="Tìm kiếm icon">
                                     <i class="fa-solid fa-magnifying-glass"></i> Tra icon
                                 </a>
-                            </div>
-                            <div class="form-text text-muted ps-1">
-                                <small><i class="fa-solid fa-circle-info me-1"></i>Sử dụng class icon từ thư viện <strong>FontAwesome 6</strong>.</small>
+                                @if(isset($errors['icon']))
+                                    <div class="invalid-feedback">{{ $errors['icon'] }}</div>
+                                @endif
                             </div>
                         </div>
 

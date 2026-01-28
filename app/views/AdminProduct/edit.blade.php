@@ -9,14 +9,23 @@
             <h5 class="mb-0">Cập Nhật Sản Phẩm: {{ $product['name'] }}</h5>
         </div>
         <div class="card-body">
+            @if(isset($errors['system']))
+                <div class="alert alert-danger">{{ $errors['system'] }}</div>
+            @endif
+
             <form action="/product/update/{{ $product['id'] }}" method="POST" enctype="multipart/form-data">
                 
                 <!-- 1. Thông tin chung -->
                 <div class="row mb-4">
                     <div class="col-md-8">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Tên sản phẩm</label>
-                            <input type="text" name="name" class="form-control" value="{{ $product['name'] }}" required>
+                            <label class="form-label fw-bold">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input type="text" name="name" 
+                                   class="form-control {{ isset($errors['name']) ? 'is-invalid' : '' }}" 
+                                   value="{{ $product['name'] }}">
+                            @if(isset($errors['name']))
+                                <div class="invalid-feedback">{{ $errors['name'] }}</div>
+                            @endif
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -40,11 +49,21 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Giá gốc</label>
-                                <input type="number" name="price_regular" class="form-control" value="{{ $product['price_regular'] }}">
+                                <input type="number" name="price_regular" 
+                                       class="form-control {{ isset($errors['price_regular']) ? 'is-invalid' : '' }}" 
+                                       value="{{ $product['price_regular'] }}">
+                                @if(isset($errors['price_regular']))
+                                    <div class="invalid-feedback">{{ $errors['price_regular'] }}</div>
+                                @endif
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Giá khuyến mãi</label>
-                                <input type="number" name="price_sale" class="form-control" value="{{ $product['price_sale'] }}">
+                                <input type="number" name="price_sale" 
+                                       class="form-control {{ isset($errors['price_sale']) ? 'is-invalid' : '' }}" 
+                                       value="{{ $product['price_sale'] }}">
+                                @if(isset($errors['price_sale']))
+                                    <div class="invalid-feedback">{{ $errors['price_sale'] }}</div>
+                                @endif
                             </div>
                         </div>
                         <div class="mb-3">
@@ -155,11 +174,10 @@
 </div>
 
 <script>
-    // Giữ nguyên JS thêm dòng như file Create
     document.getElementById('btnAddVariant').addEventListener('click', function() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" name="variant_sku[]" class="form-control form-control-sm" required></td>
+            <td><input type="text" name="variant_sku[]" class="form-control form-control-sm"></td>
             <td>
                 <div class="d-flex gap-1">
                     <input type="text" name="variant_color[]" class="form-control form-control-sm" placeholder="Màu">
