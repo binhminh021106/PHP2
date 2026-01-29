@@ -19,28 +19,6 @@
     </div>
 </div>
 
-<!-- 2. Danh mục nổi bật (3 cột) -->
-<div class="row g-4 mb-5 text-center">
-    <div class="col-md-4">
-        <div class="hover-zoom overflow-hidden position-relative">
-            <img src="https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?q=80&w=1000&auto=format&fit=crop" class="img-fluid w-100" alt="Áo">
-            <a href="#" class="position-absolute top-50 start-50 translate-middle btn btn-white bg-white rounded-0 px-4 fw-bold shadow-sm">ÁO NAM</a>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="hover-zoom overflow-hidden position-relative">
-            <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=1000&auto=format&fit=crop" class="img-fluid w-100" alt="Quần">
-            <a href="#" class="position-absolute top-50 start-50 translate-middle btn btn-white bg-white rounded-0 px-4 fw-bold shadow-sm">QUẦN NAM</a>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="hover-zoom overflow-hidden position-relative">
-            <img src="https://images.unsplash.com/photo-1521223890158-5d669a0ee79c?q=80&w=1000&auto=format&fit=crop" class="img-fluid w-100" alt="Phụ kiện">
-            <a href="#" class="position-absolute top-50 start-50 translate-middle btn btn-white bg-white rounded-0 px-4 fw-bold shadow-sm">PHỤ KIỆN</a>
-        </div>
-    </div>
-</div>
-
 <!-- 3. Sản phẩm mới (Grid sản phẩm full-width) -->
 <div class="d-flex justify-content-between align-items-center mb-4" id="new-arrival">
     <h3 class="fw-bold text-uppercase ls-1 m-0">Sản phẩm mới</h3>

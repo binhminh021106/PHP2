@@ -16,24 +16,25 @@ class ProductModel extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lấy chi tiết 1 sản phẩm
     public function getById($id)
     {
         $conn = $this->connect();
-        
-        // 1. Lấy thông tin chung
-        $stmt = $conn->prepare("SELECT * FROM products WHERE id = :id AND deleted_at IS NULL");
+
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                WHERE p.id = :id AND p.deleted_at IS NULL";
+
+        $stmt = $conn->prepare($sql);
         $stmt->execute(['id' => $id]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$product) return null;
 
-        // 2. Lấy biến thể
         $stmtVar = $conn->prepare("SELECT * FROM product_variants WHERE product_id = :id");
         $stmtVar->execute(['id' => $id]);
         $product['variants'] = $stmtVar->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3. Lấy thư viện ảnh
         $stmtImg = $conn->prepare("SELECT * FROM product_images WHERE product_id = :id");
         $stmtImg->execute(['id' => $id]);
         $product['gallery'] = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
@@ -41,18 +42,16 @@ class ProductModel extends Model
         return $product;
     }
 
-    // Thêm mới Full (Dùng Transaction)
     public function createProduct($data, $variants = [], $gallery = [])
     {
         $conn = $this->connect();
         try {
             $conn->beginTransaction();
 
-            // 1. Insert Product
             $sql = "INSERT INTO products (name, slug, category_id, price_regular, price_sale, 
                     description, content, img_thumbnail, status, created_at) 
                     VALUES (:name, :slug, :cat_id, :price, :sale, :desc, :content, :thumb, :status, NOW())";
-            
+
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 'name' => $data['name'],
@@ -65,14 +64,14 @@ class ProductModel extends Model
                 'thumb' => $data['img_thumbnail'],
                 'status' => $data['status']
             ]);
-            
+
             $productId = $conn->lastInsertId();
 
             if (!empty($variants)) {
                 $sqlVar = "INSERT INTO product_variants (product_id, sku, price, quantity, attributes, image) 
                            VALUES (:pid, :sku, :price, :qty, :attr, :img)";
                 $stmtVar = $conn->prepare($sqlVar);
-                
+
                 foreach ($variants as $var) {
                     $stmtVar->execute([
                         'pid' => $productId,
@@ -95,15 +94,12 @@ class ProductModel extends Model
 
             $conn->commit();
             return true;
-
         } catch (Exception $e) {
-            $conn->rollBack(); 
+            $conn->rollBack();
             error_log("Create Product Error: " . $e->getMessage());
             return false;
         }
     }
-
-    // Cập nhật 
     public function updateProduct($id, $data, $newVariants = [], $newGallery = [], $deletedGalleryIds = [])
     {
         $conn = $this->connect();
@@ -113,17 +109,22 @@ class ProductModel extends Model
             $sql = "UPDATE products SET name=:name, slug=:slug, category_id=:cat_id, 
                     price_regular=:price, price_sale=:sale, description=:desc, 
                     content=:content, status=:status, updated_at=NOW()";
-            
+
             if (!empty($data['img_thumbnail'])) {
                 $sql .= ", img_thumbnail=:thumb";
             }
             $sql .= " WHERE id=:id";
 
             $params = [
-                'name' => $data['name'], 'slug' => $data['slug'], 'cat_id' => $data['category_id'],
-                'price' => $data['price_regular'], 'sale' => $data['price_sale'],
-                'desc' => $data['description'], 'content' => $data['content'],
-                'status' => $data['status'], 'id' => $id
+                'name' => $data['name'],
+                'slug' => $data['slug'],
+                'cat_id' => $data['category_id'],
+                'price' => $data['price_regular'],
+                'sale' => $data['price_sale'],
+                'desc' => $data['description'],
+                'content' => $data['content'],
+                'status' => $data['status'],
+                'id' => $id
             ];
             if (!empty($data['img_thumbnail'])) {
                 $params['thumb'] = $data['img_thumbnail'];
@@ -138,7 +139,7 @@ class ProductModel extends Model
                 $sqlVar = "INSERT INTO product_variants (product_id, sku, price, quantity, attributes, image) 
                            VALUES (:pid, :sku, :price, :qty, :attr, :img)";
                 $stmtVar = $conn->prepare($sqlVar);
-                
+
                 foreach ($newVariants as $var) {
                     $stmtVar->execute([
                         'pid' => $id,
@@ -165,7 +166,6 @@ class ProductModel extends Model
 
             $conn->commit();
             return true;
-
         } catch (Exception $e) {
             $conn->rollBack();
             error_log("Update Product Error: " . $e->getMessage());

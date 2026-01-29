@@ -15,13 +15,14 @@ class CategoryModel extends Model
 
     public function create($data = [])
     {
-        $sql = "INSERT INTO $this->table (name, description, icon) VALUES (:name, :description, :icon)";
+        $sql = "INSERT INTO $this->table (name, description, icon, status) VALUES (:name, :description, :icon, :status)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'],
             'icon' => $data['icon'],
+            'status' => $data['status']
         ]);
     }
 
@@ -38,13 +39,14 @@ class CategoryModel extends Model
     {
         $now = date('Y-m-d H:i:s');
 
-        $sql = "UPDATE $this->table SET name = :name, description = :description, icon = :icon, updated_at = :updated_at WHERE id = :id AND deleted_at IS NULL";
+        $sql = "UPDATE $this->table SET name = :name, description = :description, icon = :icon, status = :status, updated_at = :updated_at WHERE id = :id AND deleted_at IS NULL";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'],
             'icon' => $data['icon'],
+            'status' => $data['status'],
             'updated_at' => $now,
             'id' => $id,
         ]);

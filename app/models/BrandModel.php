@@ -6,7 +6,7 @@ class BrandModel extends Model
 
     public function index()
     {
-        $sql = "SELECT * FROM $this->table WHERE deleted_at is NULL";
+        $sql = "SELECT * FROM $this->table WHERE deleted_at is NULL ORDER BY id DESC";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -15,13 +15,14 @@ class BrandModel extends Model
 
     public function create($data = [])
     {
-        $sql = "INSERT INTO $this->table (name, image, description) VALUES (:name, :image, :description)";
+        $sql = "INSERT INTO $this->table (name, image, description, status) VALUES (:name, :image, :description, :status)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             'name' => $data['name'],
             'image' => $data['image'],
             'description' => $data['description'],
+            'status' => $data['status']
         ]);
     }
 
@@ -36,13 +37,14 @@ class BrandModel extends Model
 
     public function update($id, $data = [])
     {
-        $sql = "UPDATE $this->table SET name = :name, image = :image, description = :description WHERE id = :id AND deleted_at is NULL";
+        $sql = "UPDATE $this->table SET name = :name, image = :image, description = :description, status = :status WHERE id = :id AND deleted_at is NULL";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
             'name' => $data['name'],
             'image' => $data['image'],
             'description' => $data['description'],
+            'status' => $data['status'],
             'id' => $id
         ]);
     }
@@ -50,7 +52,6 @@ class BrandModel extends Model
     public function destroy($id)
     {
         $now = date('Y-m-d H:i:s');
-
         $sql = "UPDATE $this->table SET deleted_at = :deleted_at WHERE id = :id";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
