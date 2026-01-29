@@ -7,6 +7,7 @@ class AuthModel extends Model
     public function findUserByEmail($email)
     {
         $sql = "SELECT * FROM $this->table WHERE email = :email AND deleted_at is NULL";
+
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         $stmt->execute(['email' => $email]);
@@ -20,12 +21,16 @@ class AuthModel extends Model
         $status = 'active';
         $avatarUrl = null;
 
-        $sql = "INSERT INTO $this->table (name, phone, email, password, address, avatar_url, status) 
-                VALUES (:name, :phone, :email, :password, :address, :avatar_url, :status)";
-        
+        // Lấy role từ dữ liệu truyền vào, nếu không có thì mặc định là 0
+        $role = isset($data['role']) ? $data['role'] : 0;
+
+        // Đã thêm trường role vào câu lệnh INSERT
+        $sql = "INSERT INTO $this->table (name, phone, email, password, address, avatar_url, status, role) 
+                VALUES (:name, :phone, :email, :password, :address, :avatar_url, :status, :role)";
+
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
-        
+
         return $stmt->execute([
             'name' => $data['name'],
             'phone' => $data['phone'],
@@ -34,6 +39,7 @@ class AuthModel extends Model
             'address' => $data['address'],
             'avatar_url' => $avatarUrl,
             'status' => $status,
+            'role' => $role // Thêm role vào đây
         ]);
     }
 

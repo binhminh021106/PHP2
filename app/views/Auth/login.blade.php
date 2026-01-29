@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', $title)
+@section('title', 'Đăng nhập')
 
 @section('content')
 <div class="row justify-content-center py-5">
