@@ -45,6 +45,7 @@ class UserController extends Controller
             $password = isset($_POST['password']) ? trim($_POST['password']) : '';
             $address = isset($_POST['address']) ? trim($_POST['address']) : '';
             $status = isset($_POST['status']) ? trim($_POST['status']) : '';
+            $role = $_POST['role'] ?? 0;
 
             $errors = [];
 
@@ -99,7 +100,8 @@ class UserController extends Controller
                 'password' => $password,
                 'address' => $address,
                 'avatar_url' => $avatarUrl,
-                'status' => $status
+                'status' => $status,
+                'role' => $role,
             ]);
 
             if ($result) {
@@ -144,6 +146,7 @@ class UserController extends Controller
             $password = isset($_POST['password']) ? trim($_POST['password']) : '';
             $address = isset($_POST['address']) ? trim($_POST['address']) : '';
             $status = isset($_POST['status']) ? trim($_POST['status']) : '';
+            $role = $_POST['role'] ?? 0;
 
             $errors = [];
 
@@ -206,7 +209,8 @@ class UserController extends Controller
                 'password' => $password,
                 'address' => $address,
                 'avatar_url' => $avatarUrl,
-                'status' => $status
+                'status' => $status,
+                'role' => $role,    
             ]);
 
             $_SESSION['success'] = "Cập nhật thành viên thành công!";
