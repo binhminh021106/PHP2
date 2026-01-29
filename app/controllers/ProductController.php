@@ -14,7 +14,7 @@ class ProductController extends Controller
     public function index()
     {
         $products = $this->productModel->getAll();
-        
+
         $successMsg = '';
         if (isset($_SESSION['success'])) {
             $successMsg = $_SESSION['success'];
@@ -28,10 +28,26 @@ class ProductController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        $product = $this->productModel->getById($id);
+        if ($product) {
+            if (!empty($product['variants'])) {
+                foreach ($product['variants'] as &$variant) {
+                    $variant['attributes'] = json_decode($variant['attributes'], true);
+                }
+            }
+            echo json_encode(['status' => 'success', 'data' => $product]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy sản phẩm']);
+        }
+        exit();
+    }
+
     public function create()
     {
         $categories = $this->categoryModel->index();
-        
+
         $errors = $_SESSION['errors'] ?? [];
         $old = $_SESSION['old'] ?? [];
         unset($_SESSION['errors'], $_SESSION['old']);
@@ -51,7 +67,7 @@ class ProductController extends Controller
             $price_regular = $_POST['price_regular'];
             $price_sale = $_POST['price_sale'];
             $category_id = $_POST['category_id'];
-            
+
             $errors = [];
 
             if (empty($name)) {
@@ -96,7 +112,7 @@ class ProductController extends Controller
             $variants = [];
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
-                    if (empty($sku)) continue; 
+                    if (empty($sku)) continue;
 
                     $varImg = null;
                     if (!empty($_FILES['variant_image']['name'][$key])) {
@@ -176,7 +192,7 @@ class ProductController extends Controller
             $name = trim($_POST['name']);
             $price_regular = $_POST['price_regular'];
             $price_sale = $_POST['price_sale'];
-            
+
             $errors = [];
             if (empty($name)) {
                 $errors['name'] = "Tên sản phẩm không được để trống.";
@@ -211,7 +227,7 @@ class ProductController extends Controller
             if (isset($_POST['variant_sku'])) {
                 foreach ($_POST['variant_sku'] as $key => $sku) {
                     if (empty($sku)) continue;
-                    
+
                     $varImg = $_POST['existing_variant_image'][$key] ?? null;
 
                     if (!empty($_FILES['variant_image']['name'][$key])) {

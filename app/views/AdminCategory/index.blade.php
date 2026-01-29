@@ -6,8 +6,8 @@
 <div class="container-fluid py-4">
     <!-- Header & Nút Thêm -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-box-open me-2"></i>Quản lý Sản phẩm</h4>
-        <a href="/product/create" class="btn btn-primary">
+        <h4 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-layer-group me-2"></i>Quản lý Danh mục</h4>
+        <a href="/category/create" class="btn btn-primary">
             <i class="fa-solid fa-plus me-2"></i>Thêm mới
         </a>
     </div>
@@ -37,81 +37,53 @@
                     <thead class="table-light text-secondary">
                         <tr>
                             <th width="5%" class="text-center">#</th>
-                            <th width="10%">Ảnh</th>
-                            <th width="30%">Tên sản phẩm / Danh mục</th>
-                            <th width="15%">Giá bán</th>
+                            <th width="25%">Tên danh mục</th>
+                            <th width="40%">Mô tả</th>
                             <th width="15%" class="text-center">Trạng thái</th>
-                            <th width="15%">Ngày tạo</th>
-                            <th width="10%" class="text-center">Hành động</th>
+                            <th width="15%" class="text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if(!empty($products))
-                        @foreach($products as $product)
+                        <!-- Sửa biến loop từ $category thành $item -->
+                        @if(!empty($category))
+                        @foreach($category as $item)
                         <tr>
-                            <td class="text-center fw-bold text-muted">{{ $product['id'] }}</td>
-
-                            <!-- Ảnh Thumbnail -->
+                            <td class="text-center fw-bold text-muted">{{ $item['id'] }}</td>
+                            
+                            <!-- Tên danh mục -->
                             <td>
-                                @if($product['img_thumbnail'])
-                                <img src="/storage/uploads/products/{{ $product['img_thumbnail'] }}"
-                                    class="rounded border object-fit-cover"
-                                    width="60" height="60"
-                                    alt="Thumbnail">
-                                @else
-                                <div class="bg-secondary bg-opacity-10 rounded d-flex align-items-center justify-content-center text-muted" style="width: 60px; height: 60px;">
-                                    <i class="fa-regular fa-image"></i>
-                                </div>
+                                <h6 class="mb-0 fw-bold text-dark">{{ $item['name'] }}</h6>
+                                @if(!empty($item['slug']))
+                                <small class="text-muted" style="font-size: 0.8rem;">/{{ $item['slug'] }}</small>
                                 @endif
                             </td>
 
-                            <!-- Tên & Danh mục -->
+                            <!-- Mô tả -->
                             <td>
-                                <h6 class="mb-1 fw-bold text-dark">{{ $product['name'] }}</h6>
-                                <span class="badge bg-info bg-opacity-10 text-info border border-info">
-                                    {{ $product['category_name'] ?? 'Chưa phân loại' }}
+                                <span class="text-muted small text-truncate d-inline-block" style="max-width: 300px;">
+                                    {{ $item['description'] ?? 'Không có mô tả' }}
                                 </span>
-                                <small class="d-block text-muted mt-1" style="font-size: 0.8rem;">Slug: {{ $product['slug'] }}</small>
-                            </td>
-
-                            <!-- Giá -->
-                            <td>
-                                @if($product['price_sale'] > 0)
-                                <div class="text-danger fw-bold">{{ number_format($product['price_sale']) }} đ</div>
-                                <div class="text-muted text-decoration-line-through small">{{ number_format($product['price_regular']) }} đ</div>
-                                @else
-                                <div class="text-dark fw-bold">{{ number_format($product['price_regular']) }} đ</div>
-                                @endif
                             </td>
 
                             <!-- Trạng thái -->
                             <td class="text-center">
-                                @if($product['status'] == 'active')
-                                <span class="badge rounded-pill bg-success">Đang bán</span>
+                                @if($item['status'] == 'active')
+                                <span class="badge rounded-pill bg-success">Hiển thị</span>
                                 @else
-                                <span class="badge rounded-pill bg-secondary">Ngừng bán</span>
+                                <span class="badge rounded-pill bg-secondary">Ẩn</span>
                                 @endif
-                            </td>
-
-                            <!-- Ngày tạo -->
-                            <td>
-                                <span class="text-muted small">
-                                    <i class="fa-regular fa-clock me-1"></i>
-                                    {{ date('d/m/Y', strtotime($product['created_at'])) }}
-                                </span>
                             </td>
 
                             <!-- Hành động -->
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
-                                    <a href="/product/edit/{{ $product['id'] }}" class="btn btn-sm btn-outline-warning" title="Sửa">
+                                    <a href="/category/edit/{{ $item['id'] }}" class="btn btn-sm btn-outline-warning" title="Sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
 
-                                    <!-- Nút xóa đã sửa: Sử dụng data attributes để tránh lỗi cú pháp -->
                                     <button class="btn btn-sm btn-outline-danger"
-                                        data-id="{{ $product['id'] }}"
-                                        data-name="{{ $product['name'] }}"
+                                        data-id="{{ $item['id'] }}"
+                                        data-name="{{ $item['name'] }}"
                                         onclick="confirmDelete(this)"
                                         title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
@@ -122,9 +94,9 @@
                         @endforeach
                         @else
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-box-open fs-2 mb-2 d-block"></i>
-                                Chưa có sản phẩm nào.
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-layer-group fs-2 mb-2 d-block"></i>
+                                Chưa có danh mục nào.
                             </td>
                         </tr>
                         @endif
@@ -136,23 +108,21 @@
 </div>
 
 <!-- Form Ẩn dùng để Submit xóa -->
-<form id="deleteProductForm" method="POST" action="/product/delete" style="display: none;">
-    <input type="hidden" name="delete_id" id="deleteProductIdInput">
+<form id="deleteCategoryForm" method="POST" action="/category/delete" style="display: none;">
+    <input type="hidden" name="delete_id" id="deleteCategoryIdInput">
 </form>
 
 @endsection
 
 @section('scripts')
 <script>
-    // Hàm nhận vào element button (el) thay vì tham số rời rạc
     function confirmDelete(el) {
-        // Lấy dữ liệu từ data attribute
         var id = el.getAttribute('data-id');
         var name = el.getAttribute('data-name');
 
         Swal.fire({
             title: 'Bạn chắc chắn chứ?',
-            text: "Xóa sản phẩm '" + name + "' sẽ không thể hoàn tác!",
+            text: "Xóa danh mục '" + name + "' sẽ không thể hoàn tác (bao gồm cả các sản phẩm thuộc danh mục này nếu có ràng buộc)!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -161,9 +131,8 @@
             cancelButtonText: 'Hủy'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Đưa ID vào form và submit
-                document.getElementById('deleteProductIdInput').value = id;
-                document.getElementById('deleteProductForm').submit();
+                document.getElementById('deleteCategoryIdInput').value = id;
+                document.getElementById('deleteCategoryForm').submit();
             }
         });
     }

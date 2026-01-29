@@ -42,6 +42,7 @@ class CategoryController extends Controller
             $name = trim($_POST['name']);
             $description = trim($_POST['description']);
             $icon = trim($_POST['icon']);
+            $status = $_POST['status'];
 
             $errors = [];
             if (empty($name)) {
@@ -62,7 +63,8 @@ class CategoryController extends Controller
             $data = [
                 'name' => $name,
                 'description' => $description,
-                'icon' => $icon
+                'icon' => $icon,
+                'status' => $status
             ];
 
             if ($this->model('CategoryModel')->create($data)) {
@@ -103,6 +105,7 @@ class CategoryController extends Controller
             $name = trim($_POST['name']);
             $description = trim($_POST['description']);
             $icon = trim($_POST['icon']);
+            $status = $_POST['status'];
 
             // --- VALIDATE ---
             $errors = [];
@@ -122,7 +125,8 @@ class CategoryController extends Controller
             $data = [
                 'name' => $name,
                 'description' => $description,
-                'icon' => $icon
+                'icon' => $icon,
+                'status' => $status,
             ];
 
             if ($this->model('CategoryModel')->update($id, $data)) {

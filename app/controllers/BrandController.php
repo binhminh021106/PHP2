@@ -7,27 +7,24 @@ class BrandController extends Controller
         $brand = $this->model('BrandModel');
         $data = $brand->index();
 
-        // Lấy thông báo thành công từ Session (nếu có) để hiển thị SweetAlert
         $successMsg = '';
         if (isset($_SESSION['success'])) {
             $successMsg = $_SESSION['success'];
-            unset($_SESSION['success']); // Xóa ngay sau khi lấy để không hiện lại khi F5
+            unset($_SESSION['success']);
         }
 
         $this->view('AdminBrand/index', [
             'brand' => $data,
-            'title' => "Quản lí Brand",
-            'success_msg' => $successMsg // Truyền biến này xuống view
+            'title' => "Quản lý Thương hiệu",
+            'success_msg' => $successMsg
         ]);
     }
 
     public function create()
     {
-        // Lấy lỗi và dữ liệu cũ từ Session (nếu có) do validate thất bại
         $errors = $_SESSION['errors'] ?? [];
         $old = $_SESSION['old'] ?? [];
 
-        // Xóa session flash sau khi lấy
         unset($_SESSION['errors']);
         unset($_SESSION['old']);
 
@@ -43,35 +40,30 @@ class BrandController extends Controller
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
             $name = isset($_POST['name']) ? trim($_POST['name']) : '';
             $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+            $status = isset($_POST['status']) ? $_POST['status'] : 'active';
 
-            // --- 1. VALIDATE DỮ LIỆU ---
             $errors = [];
 
-            // Kiểm tra rỗng
             if (empty($name)) {
                 $errors['name'] = 'Tên thương hiệu không được để trống';
             }
 
-            // Kiểm tra trùng tên (Lấy hết ra check thủ công vì chưa có hàm check trong model)
             $brandModel = $this->model('BrandModel');
             $allBrands = $brandModel->index();
             foreach ($allBrands as $b) {
-                // strcasecmp so sánh chuỗi không phân biệt hoa thường
                 if (strcasecmp($b['name'], $name) == 0) {
                     $errors['name'] = 'Tên thương hiệu đã tồn tại';
                     break;
                 }
             }
 
-            // Nếu có lỗi -> Redirect lại trang create kèm thông tin lỗi
             if (!empty($errors)) {
                 $_SESSION['errors'] = $errors;
-                $_SESSION['old'] = $_POST; // Giữ lại dữ liệu vừa nhập
+                $_SESSION['old'] = $_POST;
                 header('Location: /brand/create');
                 exit;
             }
 
-            // --- 2. XỬ LÝ UPLOAD ẢNH ---
             $imageName = "";
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
                 $targetDir = "storage/uploads/brands/";
@@ -82,7 +74,7 @@ class BrandController extends Controller
                 $fileName = $_FILES['image']['name'];
                 $fileTmp = $_FILES['image']['tmp_name'];
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
                 if (in_array($fileExt, $allowed)) {
                     $uniqueName = uniqid() . '.' . $fileExt;
@@ -93,36 +85,23 @@ class BrandController extends Controller
                 }
             }
 
-            // --- 3. LƯU VÀO DATABASE ---
             $result = $brandModel->create([
                 'name' => $name,
                 'image' => $imageName,
-                'description' => $description
+                'description' => $description,
+                'status' => $status
             ]);
 
             if ($result) {
                 $_SESSION['success'] = 'Thêm thương hiệu mới thành công!';
                 header('Location: /brand');
             } else {
-                // Nếu lỗi hệ thống khi insert
-                $_SESSION['errors']['name'] = 'Lỗi hệ thống, không thể thêm mới. Vui lòng thử lại.';
+                $_SESSION['errors']['name'] = 'Lỗi hệ thống, vui lòng thử lại.';
                 $_SESSION['old'] = $_POST;
                 header('Location: /brand/create');
             }
             exit;
         }
-    }
-
-    public function show($id)
-    {
-        $brand = $this->model('BrandModel');
-        $data = $brand->show($id);
-        $title = "Xem chi tiết brand";
-        // Do view index đang lặp foreach nên bọc $data vào mảng
-        $this->view('AdminBrand/index', [
-            'brand' => [$data],
-            'title' => $title
-        ]);
     }
 
     public function edit($id)
@@ -134,13 +113,12 @@ class BrandController extends Controller
             exit();
         }
 
-        // Lấy lỗi từ Session (nếu update thất bại redirect về)
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
 
         $this->view('AdminBrand/edit', [
             'brand' => $data,
-            'title' => "Sửa thương hiệu",
+            'title' => "Cập nhật thương hiệu",
             'errors' => $errors
         ]);
     }
@@ -150,18 +128,16 @@ class BrandController extends Controller
         if ($_SERVER['REQUEST_METHOD'] == "POST") {
             $name = isset($_POST['name']) ? trim($_POST['name']) : '';
             $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+            $status = isset($_POST['status']) ? $_POST['status'] : 'active';
 
-            // --- VALIDATE UPDATE ---
             $errors = [];
             if (empty($name)) {
                 $errors['name'] = 'Tên thương hiệu không được để trống';
             }
 
-            // Check trùng tên (trừ chính bản thân nó ra)
             $brandModel = $this->model('BrandModel');
             $allBrands = $brandModel->index();
             foreach ($allBrands as $b) {
-                // Nếu trùng tên VÀ id không phải id đang sửa
                 if (strcasecmp($b['name'], $name) == 0 && $b['id'] != $id) {
                     $errors['name'] = 'Tên thương hiệu đã tồn tại';
                     break;
@@ -174,16 +150,14 @@ class BrandController extends Controller
                 exit;
             }
 
-            // Lấy thông tin cũ
             $currentBrand = $brandModel->show($id);
             if (!$currentBrand) {
                 header('Location: /brand');
                 exit;
             }
 
-            $imageName = $currentBrand['image']; // Mặc định giữ ảnh cũ
+            $imageName = $currentBrand['image'];
 
-            // Nếu có upload ảnh mới
             if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
                 $targetDir = "storage/uploads/brands/";
                 if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
@@ -191,16 +165,15 @@ class BrandController extends Controller
                 $fileName = $_FILES['image']['name'];
                 $fileTmp = $_FILES['image']['tmp_name'];
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
                 if (in_array($fileExt, $allowed)) {
                     $uniqueName = uniqid() . '.' . $fileExt;
                     $targetFilePath = $targetDir . $uniqueName;
 
                     if (move_uploaded_file($fileTmp, $targetFilePath)) {
-                        $imageName = $uniqueName; // Cập nhật tên ảnh mới
+                        $imageName = $uniqueName;
 
-                        // Xóa ảnh cũ nếu tồn tại
                         $oldPath = $targetDir . $currentBrand['image'];
                         if (!empty($currentBrand['image']) && file_exists($oldPath)) {
                             unlink($oldPath);
@@ -212,7 +185,8 @@ class BrandController extends Controller
             $result = $brandModel->update($id, [
                 'name' => $name,
                 'image' => $imageName,
-                'description' => $description
+                'description' => $description,
+                'status' => $status
             ]);
 
             if ($result) {
@@ -235,7 +209,6 @@ class BrandController extends Controller
                 $brandModel = $this->model('BrandModel');
                 $brand = $brandModel->show($id);
 
-                // Xóa file ảnh vật lý trước nếu có
                 if ($brand && !empty($brand['image'])) {
                     $imagePath = "storage/uploads/brands/" . $brand['image'];
                     if (file_exists($imagePath)) {
@@ -243,7 +216,6 @@ class BrandController extends Controller
                     }
                 }
 
-                // Sau đó xóa trong DB
                 $brandModel->destroy($id);
                 $_SESSION['success'] = 'Đã xóa thương hiệu thành công!';
             }
