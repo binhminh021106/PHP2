@@ -17,7 +17,7 @@ class UserModel extends Model
     {
         $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO $this->table (name, phone, email, password, address, avatar_url, status) VALUES (:name, :phone, :email, :password, :address, :avatar_url, :status)";
+        $sql = "INSERT INTO $this->table (name, phone, email, password, address, avatar_url, status, role) VALUES (:name, :phone, :email, :password, :address, :avatar_url, :status, :role)";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
@@ -28,6 +28,7 @@ class UserModel extends Model
             'avatar_url' => $data['avatar_url'],
             'address' => $data['address'],
             'status' => $data['status'],
+            'role' => $data['role'],
         ]);
     }
 
@@ -45,7 +46,7 @@ class UserModel extends Model
         $now = date('Y-m-d H:i:s');
         $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
 
-        $sql = "UPDATE $this->table SET name = :name, phone = :phone, email = :email, password = :password, address = :address, avatar_url = :avatar_url, status = :status, updated_at = :updated_at WHERE id = :id AND deleted_at is NULL";
+        $sql = "UPDATE $this->table SET name = :name, phone = :phone, email = :email, password = :password, address = :address, avatar_url = :avatar_url, status = :status, role = :role, updated_at = :updated_at WHERE id = :id AND deleted_at is NULL";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
@@ -56,6 +57,7 @@ class UserModel extends Model
             'address' => $data['address'],
             'avatar_url' => $data['avatar_url'],
             'status' => $data['status'],
+            'role' => $data['role'],
             'updated_at' => $now,
             'id' => $id
         ]);
