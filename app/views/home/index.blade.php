@@ -22,7 +22,7 @@
 <!-- 3. Sản phẩm mới (Grid sản phẩm full-width) -->
 <div class="d-flex justify-content-between align-items-center mb-4" id="new-arrival">
     <h3 class="fw-bold text-uppercase ls-1 m-0">Sản phẩm mới</h3>
-    <a href="/product" class="text-decoration-none text-dark border-bottom border-dark pb-1 small fw-bold">XEM TẤT CẢ</a>
+    <a href="/shop" class="text-decoration-none text-dark border-bottom border-dark pb-1 small fw-bold">XEM TẤT CẢ</a>
 </div>
 
 <div class="row g-4 mb-5">
@@ -51,9 +51,9 @@
                 <span class="position-absolute top-0 start-0 bg-danger text-white small px-2 py-1 m-2 fw-bold">SALE</span>
                 @endif
 
-                <!-- Nút Quick View / Add to Cart (Hiện khi hover) -->
+                <!-- Nút Xem chi tiết (Hiện khi hover) -->
                 <div class="product-action position-absolute bottom-0 start-0 w-100 p-2 d-flex gap-1 justify-content-center opacity-0 transition-opacity">
-                    <button class="btn btn-light bg-white shadow-sm btn-sm rounded-0 w-100 fw-bold">THÊM VÀO GIỎ</button>
+                    <a href="/shop/detail/{{ $product['id'] }}" class="btn btn-light bg-white shadow-sm btn-sm rounded-0 w-100 fw-bold">XEM CHI TIẾT</a>
                 </div>
             </div>
 
@@ -63,7 +63,7 @@
                     {{ $product['category_name'] ?? 'BST Mới' }}
                 </div>
                 <h6 class="card-title text-truncate fw-bold">
-                    <a href="/product/detail/{{ $product['id'] }}" class="text-dark text-decoration-none">
+                    <a href="/shop/detail/{{ $product['id'] }}" class="text-dark text-decoration-none">
                         {{ $product['name'] }}
                     </a>
                 </h6>

@@ -44,6 +44,14 @@
                         <a href="#" class="small text-muted">Quên mật khẩu?</a>
                     </div>
                 </form>
+
+                <hr class="my-4">
+
+                <div class="d-grid">
+                    <a href="/auth/googleLogin" class="btn btn-outline-danger btn-lg fw-bold">
+                        <i class="fab fa-google me-2"></i> Đăng nhập bằng Google
+                    </a>
+                </div>
             </div>
         </div>
     </div>

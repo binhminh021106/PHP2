@@ -10,14 +10,23 @@
                     <a class="nav-link" href="/">Trang chủ</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/product">Sản phẩm</a>
+                    <a class="nav-link" href="/shop">Cửa hàng</a>
                 </li>
             </ul>
 
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="/cart">
-                        Giỏ hàng <span class="badge bg-danger">0</span>
+                        Giỏ hàng 
+                        @php
+                            $cartCount = 0;
+                            if (isset($_SESSION['cart'])) {
+                                foreach ($_SESSION['cart'] as $item) {
+                                    $cartCount += $item['quantity'];
+                                }
+                            }
+                        @endphp
+                        <span class="badge bg-danger">{{ $cartCount }}</span>
                     </a>
                 </li>
 

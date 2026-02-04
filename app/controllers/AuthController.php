@@ -1,4 +1,8 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Google\Client as GoogleClient;
+
 class AuthController extends Controller {
     private $authModel;
 
@@ -140,10 +144,70 @@ class AuthController extends Controller {
         }
     }
 
+    public function googleLogin() {
+        $client = new GoogleClient();
+        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
+        $client->addScope('email');
+        $client->addScope('profile');
+
+        $authUrl = $client->createAuthUrl();
+        header('Location: ' . $authUrl);
+        exit;
+    }
+
+    public function callbackGoogle() {
+        $client = new GoogleClient();
+        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
+
+        if (isset($_GET['code'])) {
+            $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+            $client->setAccessToken($token);
+
+            $oauth = new Google\Service\Oauth2($client);
+            $googleUser = $oauth->userinfo->get();
+
+            $userData = [
+                'id' => $googleUser->id,
+                'email' => $googleUser->email,
+                'name' => $googleUser->name,
+                'picture' => $googleUser->picture
+            ];
+
+            $user = $this->authModel->findOrCreateUserFromGoogle($userData);
+
+            if ($user && $user['status'] === 'active') {
+                $_SESSION['user'] = [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role']
+                ];
+
+                if ($user['role'] == 1) {
+                    header('Location: /product');
+                } else {
+                    header('Location: /home');
+                }
+                exit;
+            } else {
+                $data['error'] = 'Tài khoản của bạn đang bị khóa';
+                $this->view('Auth/login', $data);
+            }
+        } else {
+            $data['error'] = 'Đăng nhập Google thất bại';
+            $this->view('Auth/login', $data);
+        }
+    }
+
     public function logout() {
         if (isset($_SESSION['user'])) {
             unset($_SESSION['user']);
         }
         header('Location: /auth/login');
     }
+
 }
