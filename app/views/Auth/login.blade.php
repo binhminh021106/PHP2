@@ -11,17 +11,17 @@
 
                 <!-- Hiển thị thông báo thành công (ví dụ từ trang đăng ký qua) -->
                 @if(isset($_SESSION['success']))
-                    <div class="alert alert-success">
-                        {{ $_SESSION['success'] }}
-                        @php unset($_SESSION['success']); @endphp
-                    </div>
+                <div class="alert alert-success">
+                    {{ $_SESSION['success'] }}
+                    @php unset($_SESSION['success']); @endphp
+                </div>
                 @endif
 
                 <!-- Hiển thị lỗi -->
                 @if(!empty($error))
-                    <div class="alert alert-danger">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ $error }}
-                    </div>
+                <div class="alert alert-danger">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ $error }}
+                </div>
                 @endif
 
                 <form action="/auth/handleLogin" method="POST">
@@ -50,6 +50,9 @@
                 <div class="d-grid">
                     <a href="/auth/googleLogin" class="btn btn-outline-danger btn-lg fw-bold">
                         <i class="fab fa-google me-2"></i> Đăng nhập bằng Google
+                    </a>
+                    <a href="/auth/facebookLogin" class="btn btn-outline-primary btn-lg fw-bold" style="background-color: #1877F2; color: white; border: none;">
+                        <i class="fab fa-facebook-f me-2"></i> Đăng nhập bằng Facebook
                     </a>
                 </div>
             </div>
