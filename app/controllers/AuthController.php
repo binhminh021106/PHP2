@@ -1,157 +1,213 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
 
-class AuthController extends Controller
-{
+use Google\Client as GoogleClient;
+
+class AuthController extends Controller {
     private $authModel;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->authModel = $this->model('AuthModel');
     }
 
-    // --- ĐĂNG NHẬP ---
-    public function login()
-    {
-        // Nếu đã đăng nhập thì chuyển hướng về trang chủ
-        if (isset($_SESSION['user_id'])) {
-            $this->redirect('/');
+    public function login() {
+        if (isset($_SESSION['user'])) {
+            if ($_SESSION['user']['role'] == 1) {
+                header('Location: /admin/product');
+            } else {
+                header('Location: /home');
+            }
+            exit;
         }
-
-        $error = $_SESSION['error'] ?? '';
-        unset($_SESSION['error']);
-
-        $this->view('Auth.login', [
-            'title' => 'Đăng nhập',
-            'error' => $error
-        ]);
+        $this->view('Auth/login');
     }
 
-    public function handleLogin()
-    {
+    public function handleLogin() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $email = trim($_POST['email']);
             $password = $_POST['password'];
 
             if (empty($email) || empty($password)) {
-                $_SESSION['error'] = 'Vui lòng nhập đầy đủ email và mật khẩu.';
-                $this->redirect('/auth/login');
+                $data['error'] = 'Vui lòng nhập đầy đủ email và mật khẩu';
+                $this->view('Auth/login', $data);
+                return;
             }
 
-            // Tìm user theo email
             $user = $this->authModel->findUserByEmail($email);
 
-            if ($user) {
-                // Kiểm tra mật khẩu (đã hash)
-                if (password_verify($password, $user['password'])) {
-                    
-                    // Kiểm tra trạng thái tài khoản
-                    if ($user['status'] == 'inactive') {
-                        $_SESSION['error'] = 'Tài khoản của bạn đã bị khóa.';
-                        $this->redirect('/auth/login');
-                    }
-
-                    // Lưu session
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_name'] = $user['name'];
-                    $_SESSION['user_email'] = $user['email'];
-                    $_SESSION['user_role'] = $user['role'] ?? 'user'; // Nếu có phân quyền
-
-                    // Nếu là admin thì vào trang quản trị, ngược lại về trang chủ
-                    if (isset($user['role']) && $user['role'] == 'admin') {
-                        $this->redirect('/dashboard');
-                    } else {
-                        $this->redirect('/');
-                    }
-
-                } else {
-                    $_SESSION['error'] = 'Mật khẩu không chính xác.';
-                    header('Location: /auth/login');
+            if ($user && password_verify($password, $user['password'])) {
+                if ($user['status'] !== 'active') {
+                    $data['error'] = 'Tài khoản của bạn đang bị khóa';
+                    $this->view('Auth/login', $data);
+                    return;
                 }
+
+                $_SESSION['user'] = [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role']
+                ];
+
+                if ($user['role'] == 1) {
+                    header('Location: /product');
+                } else {
+                    header('Location: /home');
+                }
+                exit;
+
             } else {
-                $_SESSION['error'] = 'Email này chưa được đăng ký.';
-                header('Location: /auth/login');
+                $data['error'] = 'Email hoặc mật khẩu không chính xác';
+                $this->view('Auth/login', $data);
             }
         }
     }
 
-    // --- ĐĂNG KÝ ---
-    public function register()
-    {
-        if (isset($_SESSION['user_id'])) {
-            $this->redirect('/');
-        }
-
-        $errors = $_SESSION['errors'] ?? [];
-        $old = $_SESSION['old'] ?? [];
-        unset($_SESSION['errors'], $_SESSION['old']);
-
-        $this->view('Auth.register', [
-            'title' => 'Đăng ký tài khoản',
-            'errors' => $errors,
-            'old' => $old
+    public function register() {
+        // Truyền mảng rỗng để tránh lỗi undefined variable ở View
+        $this->view('Auth/register', [
+            'old' => [],
+            'errors' => []
         ]);
     }
 
-    public function handleRegister()
-    {
+    public function handleRegister() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            // 1. Lấy dữ liệu
             $name = trim($_POST['name']);
-            $email = trim($_POST['email']);
             $phone = trim($_POST['phone']);
+            $address = trim($_POST['address']);
+            $email = trim($_POST['email']);
             $password = $_POST['password'];
             $confirm_password = $_POST['confirm_password'];
-            $address = trim($_POST['address']);
-
-            $errors = [];
-
-            // Validate đơn giản
-            if (empty($name)) $errors['name'] = "Họ tên không được để trống";
-            if (empty($email)) $errors['email'] = "Email không được để trống";
-            if (empty($phone)) $errors['phone'] = "SĐT không được để trống";
-            if (empty($password)) $errors['password'] = "Mật khẩu không được để trống";
             
+            // Mảng chứa lỗi và dữ liệu cũ
+            $errors = [];
+            $old = $_POST;
+
+            // 2. Validate chi tiết
+            if (empty($name)) {
+                $errors['name'] = 'Họ tên không được để trống';
+            }
+
+            if (empty($phone)) {
+                $errors['phone'] = 'Số điện thoại không được để trống';
+            } elseif ($this->authModel->isPhoneExists($phone)) {
+                $errors['phone'] = 'Số điện thoại này đã được sử dụng';
+            }
+
+            if (empty($email)) {
+                $errors['email'] = 'Email không được để trống';
+            } elseif ($this->authModel->isEmailExists($email)) {
+                $errors['email'] = 'Email này đã được sử dụng';
+            }
+
+            if (empty($password)) {
+                $errors['password'] = 'Mật khẩu không được để trống';
+            } elseif (strlen($password) < 6) {
+                $errors['password'] = 'Mật khẩu phải có ít nhất 6 ký tự';
+            }
+
             if ($password !== $confirm_password) {
-                $errors['confirm_password'] = "Mật khẩu nhập lại không khớp";
+                $errors['confirm_password'] = 'Mật khẩu nhập lại không khớp';
             }
 
-            // Check trùng trong DB
-            if ($this->authModel->isEmailExists($email)) {
-                $errors['email'] = "Email này đã được sử dụng";
-            }
-            if ($this->authModel->isPhoneExists($phone)) {
-                $errors['phone'] = "Số điện thoại này đã được sử dụng";
-            }
-
+            // 3. Nếu có lỗi -> Trả về View kèm lỗi và dữ liệu cũ
             if (!empty($errors)) {
-                $_SESSION['errors'] = $errors;
-                $_SESSION['old'] = $_POST;
-                header('Location: /auth/register');
+                $this->view('Auth/register', [
+                    'error' => 'Vui lòng kiểm tra lại thông tin bên dưới',
+                    'errors' => $errors,
+                    'old' => $old
+                ]);
+                return;
             }
 
-            // Lưu vào DB (Model đã có hàm registerUser lo hash password)
-            $data = [
+            // 4. Nếu không có lỗi -> Đăng ký
+            $userData = [
                 'name' => $name,
-                'email' => $email,
                 'phone' => $phone,
+                'email' => $email,
                 'password' => $password,
-                'address' => $address
+                'address' => $address,
+                'role' => 0
             ];
 
-            if ($this->authModel->registerUser($data)) {
-                $_SESSION['success'] = "Đăng ký thành công! Vui lòng đăng nhập.";
+            if ($this->authModel->registerUser($userData)) {
                 header('Location: /auth/login');
             } else {
-                $_SESSION['error'] = "Đã có lỗi xảy ra, vui lòng thử lại.";
-                header('Location: /auth/register');
+                $this->view('Auth/register', [
+                    'error' => 'Có lỗi hệ thống, vui lòng thử lại sau',
+                    'old' => $old,
+                    'errors' => []
+                ]);
             }
         }
     }
 
-    // --- ĐĂNG XUẤT ---
-    public function logout()
-    {
-        session_destroy();
-        header('Location: /auth/login');
+    public function googleLogin() {
+        $client = new GoogleClient();
+        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
+        $client->addScope('email');
+        $client->addScope('profile');
+
+        $authUrl = $client->createAuthUrl();
+        header('Location: ' . $authUrl);
         exit;
     }
+
+    public function callbackGoogle() {
+        $client = new GoogleClient();
+        $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+        $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+        $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
+
+        if (isset($_GET['code'])) {
+            $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+            $client->setAccessToken($token);
+
+            $oauth = new Google\Service\Oauth2($client);
+            $googleUser = $oauth->userinfo->get();
+
+            $userData = [
+                'id' => $googleUser->id,
+                'email' => $googleUser->email,
+                'name' => $googleUser->name,
+                'picture' => $googleUser->picture
+            ];
+
+            $user = $this->authModel->findOrCreateUserFromGoogle($userData);
+
+            if ($user && $user['status'] === 'active') {
+                $_SESSION['user'] = [
+                    'id' => $user['id'],
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role']
+                ];
+
+                if ($user['role'] == 1) {
+                    header('Location: /product');
+                } else {
+                    header('Location: /home');
+                }
+                exit;
+            } else {
+                $data['error'] = 'Tài khoản của bạn đang bị khóa';
+                $this->view('Auth/login', $data);
+            }
+        } else {
+            $data['error'] = 'Đăng nhập Google thất bại';
+            $this->view('Auth/login', $data);
+        }
+    }
+
+    public function logout() {
+        if (isset($_SESSION['user'])) {
+            unset($_SESSION['user']);
+        }
+        header('Location: /auth/login');
+    }
+
 }

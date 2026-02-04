@@ -12,6 +12,8 @@
         "illuminate/events": "10.0",
         "illuminate/container": "10.0",
         "illuminate/filesystem": "10.0",
-        "illuminate/support": "10.0"
+        "illuminate/support": "10.0",
+        "google/apiclient": "^2.19",
+        "phpmailer/phpmailer": "^6.8"
     }
 }

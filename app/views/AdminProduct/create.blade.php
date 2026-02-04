@@ -36,7 +36,7 @@
                                     <option value="">-- Chọn danh mục --</option>
                                     @foreach($categories as $cat)
                                     <option value="{{ $cat['id'] }}" {{ (isset($old['category_id']) && $old['category_id'] == $cat['id']) ? 'selected' : '' }}>
-                                        {{ $cat['name'] }}
+                                        {{ $cat['name'] }}                                            
                                     </option>
                                     @endforeach
                                 </select>

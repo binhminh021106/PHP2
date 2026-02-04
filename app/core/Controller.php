@@ -44,6 +44,18 @@ class Controller
         exit;
     }
 
+    public function checkAdminRole() {
+        if (!isset($_SESSION['user'])) {
+            header('Location: /auth/login');
+            exit;
+        }
+
+        if ($_SESSION['user']['role'] != 1) {
+            header('Location: /'); 
+            exit;
+        }
+    }
+
     public function notFound($message): void
     {
         http_response_code(404);
