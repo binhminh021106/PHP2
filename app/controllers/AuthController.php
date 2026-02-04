@@ -171,7 +171,6 @@ class AuthController extends Controller {
             $googleUser = $oauth->userinfo->get();
 
             $userData = [
-                'id' => $googleUser->id,
                 'email' => $googleUser->email,
                 'name' => $googleUser->name,
                 'picture' => $googleUser->picture
