@@ -2,8 +2,8 @@
 
 class HomeController extends Controller
 {
-    private $productModel;
-    private $categoryModel;
+    public $productModel;
+    public $categoryModel;
 
     public function __construct()
     {
@@ -13,14 +13,14 @@ class HomeController extends Controller
 
     public function index()
     {
-        $products = $this->productModel->getAll(); 
+        $products = $this->productModel->getAll();
 
         $categories = $this->categoryModel->index();
 
-        $this->view('home.index', [
+        $this->view('home/index', [
             'products' => $products,
             'categories' => $categories,
-            'title' => 'Trang Chủ - MyShop'
+            'pageTitle' => 'Menswear - Thời trang nam cao cấp'
         ]);
     }
 }

@@ -4,40 +4,54 @@
 
 @section('content')
 <div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-dark">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ $product['name'] }}</li>
+        </ol>
+    </nav>
 
     <div class="row g-4">
         <!-- Cột Ảnh Sản Phẩm -->
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                {{-- Kiểm tra xem ảnh có tồn tại không, nếu không dùng ảnh placeholder --}}
-                @if(isset($product['image']) && !empty($product['image']))
-                    <img src="{{ BASE_URL . '/public/uploads/' . $product['image'] }}" 
-                         class="card-img-top rounded" 
-                         alt="{{ $product['name'] }}" 
-                         style="max-height: 500px; object-fit: contain; background: #f8f9fa;"
-                         onerror="this.src='https://placehold.co/600x600?text=No+Image'">
-                @else
-                    <img src="https://placehold.co/600x600?text=No+Image" class="card-img-top rounded" alt="No Image">
-                @endif
+            <div class="card border-0 shadow-sm mb-3">
+                @php
+                    $mainImg = !empty($product['img_thumbnail']) ? '/storage/uploads/products/' . $product['img_thumbnail'] : 'https://placehold.co/600x600?text=No+Image';
+                @endphp
+                <img id="mainImage" src="{{ $mainImg }}" 
+                     class="card-img-top rounded" 
+                     alt="{{ $product['name'] }}" 
+                     style="max-height: 500px; object-fit: contain; background: #f8f9fa;">
             </div>
             
             <!-- Thumbnails (Ảnh nhỏ bên dưới) -->
-            <div class="row mt-3 g-2">
+            @if(!empty($product['gallery']) && count($product['gallery']) > 0)
+            <div class="row g-2">
+                <!-- Ảnh chính làm thumb đầu tiên -->
                 <div class="col-3">
-                     <img src="https://placehold.co/150x150?text=Front" class="img-fluid rounded border cursor-pointer opacity-75 hover-opacity-100" alt="Thumb">
+                     <img src="{{ $mainImg }}" 
+                          class="img-fluid rounded border cursor-pointer opacity-100 gallery-item" 
+                          onclick="changeImage(this, '{{ $mainImg }}')" 
+                          style="cursor: pointer; aspect-ratio: 1/1; object-fit: cover;">
                 </div>
-                <div class="col-3">
-                     <img src="https://placehold.co/150x150?text=Back" class="img-fluid rounded border cursor-pointer opacity-75 hover-opacity-100" alt="Thumb">
-                </div>
-                <div class="col-3">
-                     <img src="https://placehold.co/150x150?text=Detail" class="img-fluid rounded border cursor-pointer opacity-75 hover-opacity-100" alt="Thumb">
-                </div>
+                <!-- Loop Gallery -->
+                @foreach($product['gallery'] as $img)
+                    @php $galleryUrl = '/storage/uploads/products/' . $img['image_path']; @endphp
+                    <div class="col-3">
+                         <img src="{{ $galleryUrl }}" 
+                              class="img-fluid rounded border cursor-pointer opacity-75 gallery-item" 
+                              onclick="changeImage(this, '{{ $galleryUrl }}')" 
+                              style="cursor: pointer; aspect-ratio: 1/1; object-fit: cover;">
+                    </div>
+                @endforeach
             </div>
+            @endif
         </div>
 
         <!-- Cột Thông Tin Sản Phẩm -->
         <div class="col-md-6">
-            <h1 class="display-6 fw-bold text-dark">{{ $productDetail['name'] }}</h1>
+            <h1 class="display-6 fw-bold text-dark">{{ $product['name'] }}</h1>
             
             <div class="d-flex align-items-center mb-3">
                 <div class="text-warning me-2">
@@ -47,65 +61,58 @@
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star-half-alt"></i>
                 </div>
-                <span class="text-muted small">(Xem 12 đánh giá)</span>
+                <span class="text-muted small">(Xem đánh giá)</span>
+                <span class="mx-2 text-muted">|</span>
+                <span class="text-success fw-bold">Còn hàng</span>
             </div>
 
-            <h2 class="text-danger fw-bold mb-3">{{ number_format($productDetail['price'], 0, ',', '.') }} đ</h2>
+            <!-- Giá bán -->
+            <div class="mb-3">
+                @if($product['price_sale'] > 0 && $product['price_sale'] < $product['price_regular'])
+                    <h2 class="text-danger fw-bold d-inline me-2">{{ number_format($product['price_sale'], 0, ',', '.') }} đ</h2>
+                    <del class="text-muted fs-5">{{ number_format($product['price_regular'], 0, ',', '.') }} đ</del>
+                @else
+                    <h2 class="text-danger fw-bold">{{ number_format($product['price_regular'], 0, ',', '.') }} đ</h2>
+                @endif
+            </div>
             
             <p class="text-muted mb-4">
-                {{ $productDetail['short_description'] ?? 'Sản phẩm chính hãng, chất lượng cao, bảo hành dài hạn.' }}
+                {{ $product['description'] ?? 'Sản phẩm chính hãng, chất lượng cao.' }}
             </p>
 
             <div class="card bg-light border-0 mb-4">
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tình trạng: <span class="fw-bold">Còn hàng</span></li>
-                        <li class="mb-2"><i class="fas fa-tag text-secondary me-2"></i> Danh mục: <a href="#" class="text-decoration-none">{{ $category_name ?? 'Chưa cập nhật' }}</a></li>
-                        <li class="mb-0"><i class="fas fa-industry text-secondary me-2"></i> Thương hiệu: <strong>{{ $brand_name ?? 'N/A' }}</strong></li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Tình trạng: 
+                            <span class="fw-bold">{{ isset($product['variants']) && count($product['variants']) > 0 ? 'Sẵn sàng giao hàng' : 'Liên hệ' }}</span>
+                        </li>
+                        <li class="mb-2"><i class="fas fa-tag text-secondary me-2"></i> Danh mục: 
+                            <span class="fw-bold text-dark">{{ $product['category_name'] ?? 'Chưa cập nhật' }}</span>
+                        </li>
+                        <li class="mb-0"><i class="fas fa-barcode text-secondary me-2"></i> Mã SP: <strong>#{{ $product['id'] }}</strong></li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Form Thêm vào giỏ hàng (Bao gồm chọn thuộc tính) -->
-            <form action="{{ BASE_URL . '/cart/add' }}" method="POST">
+            <!-- Form Thêm vào giỏ hàng -->
+            <form action="/cart/add" method="POST">
                 <input type="hidden" name="product_id" value="{{ $product['id'] }}">
 
-                <!-- Chọn Màu Sắc -->
+                <!-- Chọn Biến thể (Variants) -->
+                @if(!empty($product['variants']) && count($product['variants']) > 0)
                 <div class="mb-4">
-                    <label class="fw-bold mb-2 d-block">Màu sắc:</label>
-                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                        <!-- Màu Đen -->
-                        <input type="radio" class="btn-check" name="color" id="color_black" value="black" autocomplete="off" checked>
-                        <label class="btn btn-outline-dark px-3" for="color_black">Đen</label>
-
-                        <!-- Màu Trắng -->
-                        <input type="radio" class="btn-check" name="color" id="color_white" value="white" autocomplete="off">
-                        <label class="btn btn-outline-dark px-3" for="color_white">Trắng</label>
-
-                        <!-- Màu Xanh -->
-                        <input type="radio" class="btn-check" name="color" id="color_blue" value="blue" autocomplete="off">
-                        <label class="btn btn-outline-dark px-3" for="color_blue">Xanh Navy</label>
+                    <label class="fw-bold mb-2 d-block">Chọn phân loại:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach($product['variants'] as $index => $variant)
+                            <input type="radio" class="btn-check" name="variant_id" id="variant_{{ $variant['id'] }}" value="{{ $variant['id'] }}" autocomplete="off" {{ $index == 0 ? 'checked' : '' }}>
+                            <label class="btn btn-outline-dark" for="variant_{{ $variant['id'] }}">
+                                {{ $variant['attributes'] }} <br>
+                                <small>{{ number_format($variant['price'], 0, ',', '.') }}đ</small>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
-
-                <!-- Chọn Kích Thước (Size) -->
-                <div class="mb-4">
-                    <label class="fw-bold mb-2 d-block">Kích thước:</label>
-                    <div class="btn-group" role="group" aria-label="Size radio toggle button group">
-                        <input type="radio" class="btn-check" name="size" id="size_s" value="S" autocomplete="off">
-                        <label class="btn btn-outline-secondary px-3 py-2" for="size_s">S</label>
-
-                        <input type="radio" class="btn-check" name="size" id="size_m" value="M" autocomplete="off" checked>
-                        <label class="btn btn-outline-secondary px-3 py-2" for="size_m">M</label>
-
-                        <input type="radio" class="btn-check" name="size" id="size_l" value="L" autocomplete="off">
-                        <label class="btn btn-outline-secondary px-3 py-2" for="size_l">L</label>
-
-                        <input type="radio" class="btn-check" name="size" id="size_xl" value="XL" autocomplete="off">
-                        <label class="btn btn-outline-secondary px-3 py-2" for="size_xl">XL</label>
-                    </div>
-                    <div class="mt-2 text-muted small"><a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sizeGuideModal"><i class="fas fa-ruler-horizontal me-1"></i>Hướng dẫn chọn size</a></div>
-                </div>
+                @endif
 
                 <hr class="my-4">
                 
@@ -143,11 +150,10 @@
             <div class="tab-content p-4 border border-top-0 rounded-bottom bg-white shadow-sm" id="productTabContent">
                 <div class="tab-pane fade show active" id="desc" role="tabpanel">
                     <div class="content-body">
-                        @if(isset($product['description']) && !empty($product['description']))
-                            {!! $product['description'] !!}
+                        @if(isset($product['content']) && !empty($product['content']))
+                            {!! $product['content'] !!}
                         @else
-                            <p>Đang cập nhật nội dung chi tiết cho sản phẩm này.</p>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                            <p class="text-center text-muted py-3">Đang cập nhật nội dung chi tiết cho sản phẩm này.</p>
                         @endif
                     </div>
                 </div>
@@ -163,49 +169,45 @@
     </div>
     
     <!-- Sản phẩm liên quan (Gợi ý) -->
+    @if(!empty($relatedProducts) && count($relatedProducts) > 0)
     <div class="row mt-5">
         <h3 class="fw-bold mb-4 border-bottom pb-2">Sản phẩm liên quan</h3>
-        {{-- Ví dụ vòng lặp sản phẩm liên quan --}}
-        @for($i = 1; $i <= 4; $i++)
-        <div class="col-6 col-md-3">
+        @foreach($relatedProducts as $item)
+        <div class="col-6 col-md-3 mb-4">
             <div class="card h-100 border-0 shadow-sm">
-                <img src="https://placehold.co/300x300?text=Related+{{$i}}" class="card-img-top" alt="Related">
+                <a href="/detail/index/{{ $item['id'] }}">
+                    @php $rImg = !empty($item['img_thumbnail']) ? '/storage/uploads/products/' . $item['img_thumbnail'] : 'https://placehold.co/300x300'; @endphp
+                    <img src="{{ $rImg }}" class="card-img-top" alt="{{ $item['name'] }}" style="aspect-ratio: 1/1; object-fit: cover;">
+                </a>
                 <div class="card-body">
-                    <h5 class="card-title fs-6"><a href="#" class="text-decoration-none text-dark">Sản phẩm gợi ý {{ $i }}</a></h5>
-                    <p class="card-text text-danger fw-bold">150.000 đ</p>
+                    <h5 class="card-title fs-6 text-truncate">
+                        <a href="/detail/index/{{ $item['id'] }}" class="text-decoration-none text-dark">{{ $item['name'] }}</a>
+                    </h5>
+                    @if($item['price_sale'] > 0 && $item['price_sale'] < $item['price_regular'])
+                        <span class="text-danger fw-bold me-2">{{ number_format($item['price_sale'], 0, ',', '.') }}đ</span>
+                        <small class="text-decoration-line-through text-muted">{{ number_format($item['price_regular'], 0, ',', '.') }}đ</small>
+                    @else
+                        <span class="text-danger fw-bold">{{ number_format($item['price_regular'], 0, ',', '.') }}đ</span>
+                    @endif
                 </div>
             </div>
         </div>
-        @endfor
+        @endforeach
     </div>
+    @endif
 </div>
 
-<!-- Modal Hướng dẫn chọn size (Optional) -->
-<div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Bảng size tham khảo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-bordered text-center">
-            <thead>
-                <tr>
-                    <th>Size</th>
-                    <th>Chiều cao (cm)</th>
-                    <th>Cân nặng (kg)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>S</td><td>150 - 160</td><td>45 - 55</td></tr>
-                <tr><td>M</td><td>160 - 170</td><td>55 - 65</td></tr>
-                <tr><td>L</td><td>170 - 180</td><td>65 - 75</td></tr>
-                <tr><td>XL</td><td>180 - 190</td><td>75 - 85</td></tr>
-            </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+<script>
+    function changeImage(element, src) {
+        document.getElementById('mainImage').src = src;
+        // Reset opacity all items
+        document.querySelectorAll('.gallery-item').forEach(el => {
+            el.classList.remove('opacity-100');
+            el.classList.add('opacity-75');
+        });
+        // Set opacity active item
+        element.classList.remove('opacity-75');
+        element.classList.add('opacity-100');
+    }
+</script>
 @endsection

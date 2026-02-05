@@ -42,6 +42,24 @@ class ProductModel extends Model
         return $product;
     }
 
+     public function getRelated($categoryId, $excludeId, $limit = 4)
+    {
+        $conn = $this->connect();
+        $sql = "SELECT * FROM products 
+                WHERE category_id = :cat_id 
+                AND id != :id 
+                AND deleted_at IS NULL 
+                LIMIT :limit";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(':cat_id', $categoryId);
+        $stmt->bindValue(':id', $excludeId);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function createProduct($data, $variants = [], $gallery = [])
     {
         $conn = $this->connect();
