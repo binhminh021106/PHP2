@@ -1,6 +1,6 @@
 <?php
 
-class WishlistController extends Controller
+class WishlistController extends \Controller
 {
     
 }

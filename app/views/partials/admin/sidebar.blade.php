@@ -53,5 +53,12 @@
                 Khách hàng
             </a>
         </li>
+
+        <li class="nav-item mb-1">
+            <a href="/contact/index" class="nav-link text-white {{ strpos($_SERVER['REQUEST_URI'], 'contact') !== false ? 'active' : '' }}">
+                <i class="fa-solid fa-users me-3" style="width: 20px;"></i>
+                Liên hệ
+            </a>
+        </li>
     </ul>
 </div>

@@ -1,6 +1,6 @@
 <?php
 
-class CouponController extends Controller
+class CouponController extends \Controller
 {
     public function index()
     {
@@ -14,7 +14,7 @@ class CouponController extends Controller
             unset($_SESSION['success']);
         }
 
-        $this->view('AdminCoupon/index', [
+        $this->view('Admin/AdminCoupon/index', [
             'coupons' => $data,
             'title' => $title,
             'success_msg' => $successMsg
@@ -28,7 +28,7 @@ class CouponController extends Controller
         $old = $_SESSION['old'] ?? [];
         unset($_SESSION['errors'], $_SESSION['old']);
 
-        $this->view('AdminCoupon/create', [
+        $this->view('Admin/AdminCoupon/create', [
             'title' => $title,
             'errors' => $errors,
             'old' => $old
@@ -102,7 +102,7 @@ class CouponController extends Controller
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
 
-        $this->view('AdminCoupon/edit', [
+        $this->view('Admin/AdminCoupon/edit', [
             'coupon' => $data,
             'title' => $title,
             'errors' => $errors
