@@ -1,6 +1,6 @@
 <?php
 
-class ProductController extends Controller
+class ProductController extends \Controller
 {
     private $productModel;
     private $categoryModel;
@@ -22,7 +22,7 @@ class ProductController extends Controller
             unset($_SESSION['success']);
         }
 
-        $this->view('AdminProduct.index', [
+        $this->view('Admin/AdminProduct/index', [
             'products' => $products,
             'title' => 'Quản lý sản phẩm',
             'success_msg' => $successMsg
@@ -53,7 +53,7 @@ class ProductController extends Controller
         $old = $_SESSION['old'] ?? [];
         unset($_SESSION['errors'], $_SESSION['old']);
 
-        $this->view('AdminProduct.create', [
+        $this->view('Admin/AdminProduct/create', [
             'categories' => $categories,
             'title' => 'Thêm mới sản phẩm',
             'errors' => $errors,
@@ -179,7 +179,7 @@ class ProductController extends Controller
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
 
-        $this->view('AdminProduct.edit', [
+        $this->view('Admin/AdminProduct/edit', [
             'product' => $product,
             'categories' => $categories,
             'title' => 'Cập nhật sản phẩm',

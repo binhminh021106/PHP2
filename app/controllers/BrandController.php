@@ -1,6 +1,6 @@
 <?php
 
-class BrandController extends Controller
+class BrandController extends \Controller
 {
     public function index()
     {
@@ -13,7 +13,7 @@ class BrandController extends Controller
             unset($_SESSION['success']);
         }
 
-        $this->view('AdminBrand/index', [
+        $this->view('Admin/AdminBrand/index', [
             'brand' => $data,
             'title' => "Quản lý Thương hiệu",
             'success_msg' => $successMsg
@@ -28,7 +28,7 @@ class BrandController extends Controller
         unset($_SESSION['errors']);
         unset($_SESSION['old']);
 
-        $this->view('AdminBrand/create', [
+        $this->view('Admin/AdminBrand/create', [
             'title' => "Thêm thương hiệu",
             'errors' => $errors,
             'old' => $old
@@ -116,7 +116,7 @@ class BrandController extends Controller
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
 
-        $this->view('AdminBrand/edit', [
+        $this->view('Admin/AdminBrand/edit', [
             'brand' => $data,
             'title' => "Cập nhật thương hiệu",
             'errors' => $errors

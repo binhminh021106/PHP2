@@ -1,6 +1,6 @@
 <?php
 
-class CategoryController extends Controller
+class CategoryController extends \Controller
 {
     public function index()
     {
@@ -14,7 +14,7 @@ class CategoryController extends Controller
             unset($_SESSION['success']);
         }
 
-        $this->view('AdminCategory/index', [
+        $this->view('Admin/AdminCategory/index', [
             'category' => $data,
             'title' => $title,
             'success_msg' => $successMsg
@@ -29,7 +29,7 @@ class CategoryController extends Controller
         $old = $_SESSION['old'] ?? [];
         unset($_SESSION['errors'], $_SESSION['old']);
 
-        $this->view('AdminCategory/create', [
+        $this->view('Admin/AdminCategory/create', [
             'title' => $title,
             'errors' => $errors,
             'old' => $old
@@ -92,7 +92,7 @@ class CategoryController extends Controller
         unset($_SESSION['errors']);
 
         $title = "Chỉnh sửa danh mục";
-        $this->view('AdminCategory/edit', [
+        $this->view('Admin/AdminCategory/edit', [
             'category' => $data,
             'title' => $title,
             'errors' => $errors

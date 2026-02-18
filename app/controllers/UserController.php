@@ -1,6 +1,6 @@
 <?php
 
-class UserController extends Controller
+class UserController extends \Controller
 {
     // Hiển thị danh sách User
     public function index()
@@ -14,7 +14,7 @@ class UserController extends Controller
             unset($_SESSION['success']);
         }
 
-        $this->view('AdminUser/index', [
+        $this->view('Admin/AdminUser/index', [
             'user' => $users,
             'title' => "Quản lý thành viên",
             'success_msg' => $successMsg
@@ -28,7 +28,7 @@ class UserController extends Controller
         $old = $_SESSION['old'] ?? [];
         unset($_SESSION['errors'], $_SESSION['old']);
 
-        $this->view('AdminUser/create', [
+        $this->view('Admin/AdminUser/create', [
             'title' => "Thêm thành viên mới",
             'errors' => $errors,
             'old' => $old
@@ -129,7 +129,7 @@ class UserController extends Controller
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
 
-        $this->view('AdminUser/edit', [
+        $this->view('Admin/AdminUser/edit', [
             'user' => $user,
             'title' => "Cập nhật thành viên",
             'errors' => $errors
