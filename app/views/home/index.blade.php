@@ -4,9 +4,7 @@
 
 @section('content')
 
-<!-- CUSTOM STYLE CHO TRANG HOME -->
 <style>
-    /* Import Font thời trang */
     @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
 
     :root {
@@ -14,7 +12,6 @@
         --font-heading: 'Playfair Display', serif;
         --color-dark: #111;
         --color-accent: #c9a47c;
-        /* Màu vàng kim nhẹ */
         --transition: all 0.4s ease;
     }
 
@@ -23,10 +20,8 @@
         color: var(--color-dark);
     }
 
-    /* Override Bootstrap */
     .btn {
         border-radius: 0;
-        /* Bo góc vuông vức sang trọng */
         padding: 12px 28px;
         text-transform: uppercase;
         font-size: 0.85rem;
@@ -50,10 +45,8 @@
         color: black;
     }
 
-    /* 1. HERO SECTION */
     .hero-section {
         height: 85vh;
-        /* Chiều cao lớn */
         min-height: 550px;
         background-position: center;
         background-size: cover;
@@ -66,7 +59,6 @@
         position: absolute;
         inset: 0;
         background: rgba(0, 0, 0, 0.3);
-        /* Lớp phủ tối */
     }
 
     .hero-content {
@@ -106,7 +98,6 @@
         }
     }
 
-    /* 2. CATEGORY SECTION */
     .cat-grid-item {
         position: relative;
         display: block;
@@ -168,7 +159,6 @@
         opacity: 1;
     }
 
-    /* 3. PRODUCT CARD */
     .product-card {
         background: transparent;
         border: none;
@@ -179,7 +169,6 @@
         position: relative;
         overflow: hidden;
         aspect-ratio: 3/4;
-        /* Tỉ lệ ảnh dọc thời trang */
     }
 
     .product-thumb img {
@@ -273,7 +262,6 @@
     }
 </style>
 
-<!-- 1. HERO BANNER -->
 <section class="hero-section" style="background-image: url('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2070&auto=format&fit=crop');">
     <div class="hero-overlay"></div>
     <div class="container-fluid">
@@ -289,7 +277,6 @@
     </div>
 </section>
 
-<!-- 2. FEATURES (Dịch vụ) -->
 <section class="py-5 bg-white border-bottom">
     <div class="container">
         <div class="row text-center g-4">
@@ -317,7 +304,6 @@
     </div>
 </section>
 
-<!-- 3. CATEGORIES GRID (Danh mục) -->
 @if(!empty($categories))
 <section class="py-5" id="collections">
     <div class="container">
@@ -325,11 +311,9 @@
         <p class="section-subtitle">Lựa chọn phong cách phù hợp với bạn</p>
 
         <div class="row g-3">
-            <!-- Hiển thị tối đa 3 danh mục đầu tiên -->
             @foreach(array_slice($categories, 0, 3) as $cat)
             <div class="col-md-4">
                 <a href="/category/{{ $cat['id'] }}" class="cat-grid-item">
-                    <!-- Placeholder ảnh danh mục nếu không có -->
                     @php $catImg = !empty($cat['image']) ? '/public/uploads/'.$cat['image'] : 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=500&q=80'; @endphp
                     <img src="{{ $catImg }}" alt="{{ $cat['name'] }}">
                     <div class="cat-content">
@@ -344,7 +328,6 @@
 </section>
 @endif
 
-<!-- 4. NEW ARRIVALS (Sản phẩm mới) -->
 <section class="py-5 bg-light" id="shop-now">
     <div class="container">
         <h2 class="section-title">Sản Phẩm Mới</h2>
@@ -363,12 +346,10 @@
                         @endphp
                         <img src="{{ $img }}" alt="{{ $product['name'] }}">
 
-                        <!-- Badges -->
                         @if($product['price_sale'] > 0)
                         <span class="position-absolute top-0 start-0 bg-dark text-white small px-2 py-1 m-2">SALE</span>
                         @endif
 
-                        <!-- Hover Actions -->
                         <div class="product-actions">
                             <a href="/detail/index/{{ $product['id'] }}" class="action-btn" title="Xem nhanh">
                                 <i class="far fa-eye"></i>
@@ -416,7 +397,6 @@
     </div>
 </section>
 
-<!-- 5. PROMO BANNER (Banner khuyến mãi) -->
 <section class="py-5 bg-dark text-white text-center d-flex align-items-center justify-content-center"
     style="min-height: 400px; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80') center/cover fixed;">
     <div>
@@ -426,7 +406,6 @@
     </div>
 </section>
 
-<!-- 6. NEWSLETTER -->
 <section class="py-5">
     <div class="container text-center">
         <div class="row justify-content-center">
@@ -442,5 +421,38 @@
         </div>
     </div>
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        <?php if (isset($_SESSION['success'])): ?>
+            Toast.fire({
+                icon: 'success',
+                title: '<?= addslashes($_SESSION['success']) ?>'
+            });
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error'])): ?>
+            Toast.fire({
+                icon: 'error',
+                title: '<?= addslashes($_SESSION['error']) ?>'
+            });
+            <?php unset($_SESSION['error']); ?>
+        <?php endif; ?>
+    });
+</script>
 
 @endsection
