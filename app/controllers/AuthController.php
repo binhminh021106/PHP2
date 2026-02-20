@@ -3,11 +3,14 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Google\Client as GoogleClient;
 
-class AuthController extends Controller {
+class AuthController extends \Controller {
     private $authModel;
 
     public function __construct() {
         $this->authModel = $this->model('AuthModel');
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     public function login() {
@@ -19,7 +22,14 @@ class AuthController extends Controller {
             }
             exit;
         }
-        $this->view('Auth/login');
+
+        $data = [];
+        if (isset($_SESSION['success'])) {
+            $data['success'] = $_SESSION['success'];
+            unset($_SESSION['success']); 
+        }
+
+        $this->view('Auth/login', $data);
     }
 
     public function handleLogin() {
@@ -49,8 +59,10 @@ class AuthController extends Controller {
                     'role' => $user['role']
                 ];
 
+                $_SESSION['success'] = 'Đăng nhập thành công!';
+
                 if ($user['role'] == 1) {
-                    header('Location: /product');
+                    header('Location: /admin/product');
                 } else {
                     header('Location: /home');
                 }
@@ -64,28 +76,30 @@ class AuthController extends Controller {
     }
 
     public function register() {
-        // Truyền mảng rỗng để tránh lỗi undefined variable ở View
-        $this->view('Auth/register', [
+        $data = [
             'old' => [],
             'errors' => []
-        ]);
+        ];
+
+        if (isset($_SESSION['success'])) {
+            $data['success'] = $_SESSION['success'];
+            unset($_SESSION['success']);
+        }
+
+        $this->view('Auth/register', $data);
     }
 
     public function handleRegister() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // 1. Lấy dữ liệu
             $name = trim($_POST['name']);
             $phone = trim($_POST['phone']);
-            $address = trim($_POST['address']);
             $email = trim($_POST['email']);
             $password = $_POST['password'];
             $confirm_password = $_POST['confirm_password'];
             
-            // Mảng chứa lỗi và dữ liệu cũ
             $errors = [];
             $old = $_POST;
 
-            // 2. Validate chi tiết
             if (empty($name)) {
                 $errors['name'] = 'Họ tên không được để trống';
             }
@@ -112,7 +126,6 @@ class AuthController extends Controller {
                 $errors['confirm_password'] = 'Mật khẩu nhập lại không khớp';
             }
 
-            // 3. Nếu có lỗi -> Trả về View kèm lỗi và dữ liệu cũ
             if (!empty($errors)) {
                 $this->view('Auth/register', [
                     'error' => 'Vui lòng kiểm tra lại thông tin bên dưới',
@@ -122,18 +135,18 @@ class AuthController extends Controller {
                 return;
             }
 
-            // 4. Nếu không có lỗi -> Đăng ký
             $userData = [
                 'name' => $name,
                 'phone' => $phone,
                 'email' => $email,
                 'password' => $password,
-                'address' => $address,
                 'role' => 0
             ];
 
             if ($this->authModel->registerUser($userData)) {
+                $_SESSION['success'] = 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.';
                 header('Location: /auth/login');
+                exit;
             } else {
                 $this->view('Auth/register', [
                     'error' => 'Có lỗi hệ thống, vui lòng thử lại sau',
@@ -186,8 +199,10 @@ class AuthController extends Controller {
                     'role' => $user['role']
                 ];
 
+                $_SESSION['success'] = 'Đăng nhập bằng Google thành công!';
+
                 if ($user['role'] == 1) {
-                    header('Location: /product');
+                    header('Location: /admin/product');
                 } else {
                     header('Location: /home');
                 }
@@ -206,7 +221,9 @@ class AuthController extends Controller {
         if (isset($_SESSION['user'])) {
             unset($_SESSION['user']);
         }
-        header('Location: /auth/login');
+        
+        $_SESSION['success'] = 'Bạn đã đăng xuất tài khoản thành công.';
+        header('Location: /home');
+        exit;
     }
-
 }
