@@ -1,6 +1,6 @@
 <?php
 
-class AuthModel extends Model
+class AuthModel extends \Model
 {
     private $table = 'users';
 
@@ -36,12 +36,15 @@ class AuthModel extends Model
 
     public function registerUser($data)
     {
-        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+        $password = !empty($data['password']) ? $data['password'] : bin2hex(random_bytes(8));
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        $status = 'active';
-        $avatarUrl = null;
+        $status = $data['status'] ?? 'active';
+        $avatarUrl = $data['avatar_url'] ?? null;
+        $role = $data['role'] ?? 0;
 
-        $role = isset($data['role']) ? $data['role'] : 0;
+        $phone = !empty($data['phone']) ? $data['phone'] : null;
+        $address = !empty($data['address']) ? $data['address'] : null;
 
         $sql = "INSERT INTO $this->table (name, phone, email, password, address, avatar_url, status, role, google_id, facebook_id) 
                 VALUES (:name, :phone, :email, :password, :address, :avatar_url, :status, :role, :google_id, :facebook_id)";
@@ -51,15 +54,15 @@ class AuthModel extends Model
 
         return $stmt->execute([
             'name' => $data['name'],
-            'phone' => $data['phone'],
+            'phone' => $phone,
             'email' => $data['email'],
             'password' => $hashedPassword,
-            'address' => $data['address'],
+            'address' => $address,
             'avatar_url' => $avatarUrl,
             'status' => $status,
             'role' => $role,
-            'google_id' => $data['google_id'] ?? '',
-            'facebook_id' => $data['facebook_id'] ?? ''
+            'google_id' => $data['google_id'] ?? null,
+            'facebook_id' => $data['facebook_id'] ?? null
         ]);
     }
 
@@ -83,22 +86,28 @@ class AuthModel extends Model
 
     public function findOrCreateUserFromGoogle($googleUser)
     {
-        $user = $this->findUserByGoogleId($googleUser['id']);
+        $googleId = $googleUser['id'] ?? $googleUser['google_id'] ?? null;
+        $picture = $googleUser['picture'] ?? $googleUser['avatar_url'] ?? null;
 
-        if ($user) {
-            if (!empty($googleUser['picture']) && empty($user['avatar_url'])) {
-                $this->updateUserAvatar($user['id'], $googleUser['picture']);
+        if ($googleId) {
+            $user = $this->findUserByGoogleId($googleId);
+            if ($user) {
+                if (!empty($picture) && empty($user['avatar_url'])) {
+                    $this->updateUserAvatar($user['id'], $picture);
+                }
+                return $user;
             }
-            return $user;
         }
 
         $user = $this->findUserByEmail($googleUser['email']);
 
         if ($user) {
-            if (!empty($googleUser['picture']) && empty($user['avatar_url'])) {
-                $this->updateUserAvatar($user['id'], $googleUser['picture']);
+            if (!empty($picture) && empty($user['avatar_url'])) {
+                $this->updateUserAvatar($user['id'], $picture);
             }
-            $this->updateUserGoogleId($user['id'], $googleUser['id']);
+            if ($googleId) {
+                $this->updateUserGoogleId($user['id'], $googleId);
+            }
             return $user;
         }
 
@@ -106,12 +115,12 @@ class AuthModel extends Model
             'name' => $googleUser['name'],
             'email' => $googleUser['email'],
             'password' => '',
-            'phone' => '',
-            'address' => '',
-            'avatar_url' => $googleUser['picture'] ?? null,
+            'phone' => null,
+            'address' => null,
+            'avatar_url' => $picture,
             'status' => 'active',
             'role' => 0,
-            'google_id' => $googleUser['id']
+            'google_id' => $googleId
         ];
 
         $this->registerUser($data);
@@ -120,22 +129,28 @@ class AuthModel extends Model
 
     public function findOrCreateUserFromFacebook($facebookUser)
     {
-        $user = $this->findUserByFacebookId($facebookUser['id']);
+        $facebookId = $facebookUser['id'] ?? $facebookUser['facebook_id'] ?? null;
+        $picture = $facebookUser['picture'] ?? $facebookUser['avatar_url'] ?? null;
 
-        if ($user) {
-            if (!empty($facebookUser['picture']) && empty($user['avatar_url'])) {
-                $this->updateUserAvatar($user['id'], $facebookUser['picture']);
+        if ($facebookId) {
+            $user = $this->findUserByFacebookId($facebookId);
+            if ($user) {
+                if (!empty($picture) && empty($user['avatar_url'])) {
+                    $this->updateUserAvatar($user['id'], $picture);
+                }
+                return $user;
             }
-            return $user;
         }
 
         $user = $this->findUserByEmail($facebookUser['email']);
 
         if ($user) {
-            if (!empty($facebookUser['picture']) && empty($user['avatar_url'])) {
-                $this->updateUserAvatar($user['id'], $facebookUser['picture']);
+            if (!empty($picture) && empty($user['avatar_url'])) {
+                $this->updateUserAvatar($user['id'], $picture);
             }
-            $this->updateUserFacebookId($user['id'], $facebookUser['id']);
+            if ($facebookId) {
+                $this->updateUserFacebookId($user['id'], $facebookId);
+            }
             return $user;
         }
 
@@ -143,16 +158,49 @@ class AuthModel extends Model
             'name' => $facebookUser['name'],
             'email' => $facebookUser['email'],
             'password' => '',
-            'phone' => '',
-            'address' => '',
-            'avatar_url' => $facebookUser['picture'] ?? null,
+            'phone' => null,
+            'address' => null,
+            'avatar_url' => $picture,
             'status' => 'active',
             'role' => 0,
-            'facebook_id' => $facebookUser['id']
+            'facebook_id' => $facebookId
         ];
 
         $this->registerUser($data);
         return $this->findUserByEmail($facebookUser['email']);
+    }
+
+    public function saveResetToken($email, $token, $expiry)
+    {
+        $sql = "UPDATE $this->table SET reset_token = :token, reset_token_expire = :expiry WHERE email = :email";
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([
+            'token' => $token,
+            'expiry' => $expiry,
+            'email' => $email
+        ]);
+    }
+
+    public function getUserByResetToken($token)
+    {
+        $sql = "SELECT * FROM $this->table WHERE reset_token = :token AND reset_token_expire > NOW() LIMIT 1";
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['token' => $token]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updatePassword($userId, $newPassword)
+    {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $sql = "UPDATE $this->table SET password = :password, reset_token = NULL, reset_token_expire = NULL WHERE id = :id";
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([
+            'password' => $hashedPassword,
+            'id' => $userId
+        ]);
     }
 
     private function updateUserAvatar($userId, $avatarUrl)

@@ -7,7 +7,7 @@ class ProductController extends \Controller
 
     public function __construct()
     {
-        $this->checkAdminRole();
+        $this->checkAdmin();
         $this->productModel = $this->model('ProductModel');
         $this->categoryModel = $this->model('CategoryModel');
     }

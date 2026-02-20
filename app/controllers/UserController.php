@@ -2,7 +2,11 @@
 
 class UserController extends \Controller
 {
-    // Hiển thị danh sách User
+    public function __construct()
+    {
+        $this->checkAdmin();
+    }
+
     public function index()
     {
         $userModel = $this->model('UserModel');
@@ -210,7 +214,7 @@ class UserController extends \Controller
                 'address' => $address,
                 'avatar_url' => $avatarUrl,
                 'status' => $status,
-                'role' => $role,    
+                'role' => $role,
             ]);
 
             $_SESSION['success'] = "Cập nhật thành viên thành công!";

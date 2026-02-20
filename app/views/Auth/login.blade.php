@@ -182,7 +182,7 @@
                                             Ghi nhớ tài khoản
                                         </label>
                                     </div>
-                                    <a href="/auth/forgot-password" class="small auth-link text-muted">Quên mật khẩu?</a>
+                                    <a href="/auth/forgotPassword" class="small auth-link text-muted">Quên mật khẩu?</a>
                                 </div>
 
                                 {{-- Nút Submit --}}

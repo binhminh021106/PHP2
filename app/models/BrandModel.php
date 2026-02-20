@@ -1,6 +1,6 @@
 <?php
 
-class BrandModel extends Model
+class BrandModel extends \Model
 {
     private $table = 'brands';
 

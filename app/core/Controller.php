@@ -18,7 +18,6 @@ class Controller
         echo $blade->render($view, $data);
     }
 
-
     protected function normalizeViewName(string $view): string
     {
         $view = trim($view);
@@ -26,7 +25,7 @@ class Controller
         $view = preg_replace('/\.+/', '.', $view);
         return trim($view, '.');
     }
-    // product ->
+
     public function model($name)
     {
         $class = ucfirst($name);
@@ -44,14 +43,37 @@ class Controller
         exit;
     }
 
-    public function checkAdminRole() {
-        if (!isset($_SESSION['user'])) {
-            header('Location: /auth/login');
-            exit;
+    public function checkAdmin()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        if ($_SESSION['user']['role'] != 1) {
-            header('Location: /'); 
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] != 1) {
+            header($_SERVER["SERVER_PROTOCOL"] . " 404 Not Found");
+
+            echo '<!DOCTYPE html>
+            <html lang="vi">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>404 Not Found</title>
+                <style>
+                    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding-top: 10%; background: #f8f9fa; color: #333; }
+                    h1 { font-size: 80px; margin-bottom: 0; color: #dc3545; }
+                    p { font-size: 18px; color: #666; margin-top: 10px; }
+                    a { display: inline-block; margin-top: 20px; padding: 10px 25px; background: #111; color: #fff; text-decoration: none; border-radius: 5px; transition: 0.3s; }
+                    a:hover { background: #333; }
+                </style>
+            </head>
+            <body>
+                <h1>404</h1>
+                <h2>Không tìm thấy trang</h2>
+                <p>Opps! Trang bạn yêu cầu không tồn tại hoặc bạn không có quyền truy cập khu vực này.</p>
+                <a href="/home">Quay lại Trang Chủ</a>
+            </body>
+            </html>';
+
             exit;
         }
     }
@@ -62,6 +84,7 @@ class Controller
         /**
          * sau nay co the load theo view errors
          */
-        echo "controller Not Found - ' . $message. </h1>";
+        // Đã sửa lại lỗi nháy đơn/nháy kép ở dòng này
+        echo "<h1>Controller Not Found - " . htmlspecialchars($message) . "</h1>";
     }
 }
