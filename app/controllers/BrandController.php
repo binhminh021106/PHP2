@@ -2,6 +2,11 @@
 
 class BrandController extends \Controller
 {
+    public function __construct()
+    {
+        $this->checkAdmin();
+    }
+
     public function index()
     {
         $brand = $this->model('BrandModel');

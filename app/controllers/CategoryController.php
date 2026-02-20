@@ -2,6 +2,12 @@
 
 class CategoryController extends \Controller
 {
+
+    public function __construct()
+    {
+        $this->checkAdmin();
+    }
+    
     public function index()
     {
         $category = $this->model('CategoryModel');

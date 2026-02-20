@@ -1,6 +1,6 @@
 <?php
 
-class CategoryModel extends Model
+class CategoryModel extends \Model
 {
     private $table = 'categories';
 

@@ -2,6 +2,11 @@
 
 class CouponController extends \Controller
 {
+    public function __construct()
+    {
+        $this->checkAdmin();
+    }
+
     public function index()
     {
         $couponModel = $this->model('CouponModel');
