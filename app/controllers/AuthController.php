@@ -23,7 +23,7 @@ class AuthController extends \Controller
     {
         if (isset($_SESSION['user'])) {
             if ($_SESSION['user']['role'] == 1) {
-                header('Location: /product');
+                header('Location: /home');
             } else {
                 header('Location: /home');
             }
@@ -70,7 +70,7 @@ class AuthController extends \Controller
                 $_SESSION['success'] = 'Đăng nhập thành công!';
 
                 if ($user['role'] == 1) {
-                    header('Location: /product');
+                    header('Location: /home');
                 } else {
                     header('Location: /home');
                 }
