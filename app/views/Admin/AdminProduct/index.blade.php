@@ -35,7 +35,7 @@
                         <tr>
                             <th width="5%" class="text-center">#</th>
                             <th width="10%">Ảnh</th>
-                            <th width="30%">Tên sản phẩm / Danh mục</th>
+                            <th width="30%">Tên sản phẩm / Phân loại</th>
                             <th width="15%">Giá bán</th>
                             <th width="15%" class="text-center">Trạng thái</th>
                             <th width="15%">Ngày tạo</th>
@@ -65,9 +65,16 @@
                                 <!-- CÁCH MỚI: Dùng class và data-id -->
                                 <td class="btn-show-detail" data-id="{{ $product['id'] }}" style="cursor: pointer;" title="Xem chi tiết">
                                     <h6 class="mb-1 fw-bold text-dark">{{ $product['name'] }}</h6>
+                                    
                                     <span class="badge bg-info bg-opacity-10 text-info border border-info">
                                         {{ $product['category_name'] ?? 'Chưa phân loại' }}
                                     </span>
+                                    
+                                    <!-- ĐÃ THÊM: Badge hiển thị Thương hiệu -->
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning ms-1">
+                                        {{ $product['brand_name'] ?? 'Không có TH' }}
+                                    </span>
+
                                     <small class="d-block text-muted mt-1" style="font-size: 0.8rem;">Slug: {{ $product['slug'] }}</small>
                                 </td>
 
@@ -286,6 +293,10 @@
                                 <h4 class="fw-bold text-primary">${p.name}</h4>
                                 <div class="mb-2">
                                     <span class="badge bg-info text-dark">${p.category_name || 'Chưa phân loại'}</span>
+                                    
+                                    <!-- ĐÃ THÊM: Badge Thương hiệu trong phần Modal -->
+                                    <span class="badge bg-warning text-dark ms-1">${p.brand_name || 'Không có TH'}</span>
+                                    
                                     <span class="text-muted small ms-2"><i class="fa-solid fa-link me-1"></i>${p.slug}</span>
                                 </div>
 

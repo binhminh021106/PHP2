@@ -4,12 +4,14 @@ class ProductController extends \Controller
 {
     private $productModel;
     private $categoryModel;
+    private $brandModel; // Khai báo thêm BrandModel
 
     public function __construct()
     {
-        $this->checkAdmin();
+        // $this->checkAdmin();
         $this->productModel = $this->model('ProductModel');
         $this->categoryModel = $this->model('CategoryModel');
+        $this->brandModel = $this->model('BrandModel'); // Load model Brand
     }
 
     public function index()
@@ -48,6 +50,7 @@ class ProductController extends \Controller
     public function create()
     {
         $categories = $this->categoryModel->index();
+        $brands = $this->brandModel->index(); // Lấy danh sách thương hiệu
 
         $errors = $_SESSION['errors'] ?? [];
         $old = $_SESSION['old'] ?? [];
@@ -55,6 +58,7 @@ class ProductController extends \Controller
 
         $this->view('Admin/AdminProduct/create', [
             'categories' => $categories,
+            'brands' => $brands, // Truyền brands ra view
             'title' => 'Thêm mới sản phẩm',
             'errors' => $errors,
             'old' => $old
@@ -67,7 +71,8 @@ class ProductController extends \Controller
             $name = trim($_POST['name']);
             $price_regular = $_POST['price_regular'];
             $price_sale = $_POST['price_sale'];
-            $category_id = $_POST['category_id'];
+            $category_id = $_POST['category_id'] ?? '';
+            $brand_id = $_POST['brand_id'] ?? ''; // Lấy thêm brand_id từ form
 
             $errors = [];
 
@@ -86,6 +91,10 @@ class ProductController extends \Controller
             if (empty($category_id)) {
                 $errors['category_id'] = "Vui lòng chọn danh mục.";
             }
+            
+            if (empty($brand_id)) {
+                $errors['brand_id'] = "Vui lòng chọn thương hiệu."; // Bắt lỗi brand
+            }
 
             if (!empty($errors)) {
                 $_SESSION['errors'] = $errors;
@@ -94,20 +103,25 @@ class ProductController extends \Controller
                 exit();
             }
 
+            // Ép kiểu dữ liệu và đưa brand_id vào mảng
             $data = [
                 'name' => $name,
                 'slug' => $this->createSlug($name),
-                'category_id' => $category_id,
-                'price_regular' => $price_regular,
-                'price_sale' => $price_sale,
-                'description' => $_POST['description'],
-                'content' => $_POST['content'],
+                'category_id' => !empty($category_id) ? (int)$category_id : 0, 
+                'brand_id' => !empty($brand_id) ? (int)$brand_id : 0, // Thêm brand_id
+                'price_regular' => !empty($price_regular) ? (float)$price_regular : 0,
+                'price_sale' => !empty($price_sale) ? (float)$price_sale : 0,
+                'description' => $_POST['description'] ?? '',
+                'content' => $_POST['content'] ?? '',
                 'status' => $_POST['status'] ?? 'inactive',
-                'img_thumbnail' => null
+                'img_thumbnail' => ''
             ];
 
             if (!empty($_FILES['img_thumbnail']['name'])) {
-                $data['img_thumbnail'] = $this->uploadFile($_FILES['img_thumbnail'], 'products');
+                $uploadedImg = $this->uploadFile($_FILES['img_thumbnail'], 'products');
+                if ($uploadedImg) {
+                    $data['img_thumbnail'] = $uploadedImg;
+                }
             }
 
             $variants = [];
@@ -115,7 +129,7 @@ class ProductController extends \Controller
                 foreach ($_POST['variant_sku'] as $key => $sku) {
                     if (empty($sku)) continue;
 
-                    $varImg = null;
+                    $varImg = '';
                     if (!empty($_FILES['variant_image']['name'][$key])) {
                         $file = [
                             'name' => $_FILES['variant_image']['name'][$key],
@@ -124,7 +138,8 @@ class ProductController extends \Controller
                             'error' => $_FILES['variant_image']['error'][$key],
                             'size' => $_FILES['variant_image']['size'][$key],
                         ];
-                        $varImg = $this->uploadFile($file, 'variants');
+                        $uploadedVar = $this->uploadFile($file, 'variants');
+                        if ($uploadedVar) $varImg = $uploadedVar;
                     }
 
                     $attributes = [
@@ -134,8 +149,8 @@ class ProductController extends \Controller
 
                     $variants[] = [
                         'sku' => $sku,
-                        'price' => $_POST['variant_price'][$key] ?? 0,
-                        'quantity' => $_POST['variant_qty'][$key] ?? 0,
+                        'price' => !empty($_POST['variant_price'][$key]) ? (float)$_POST['variant_price'][$key] : 0,
+                        'quantity' => !empty($_POST['variant_qty'][$key]) ? (int)$_POST['variant_qty'][$key] : 0,
                         'attributes' => json_encode($attributes, JSON_UNESCAPED_UNICODE),
                         'image' => $varImg
                     ];
@@ -162,7 +177,8 @@ class ProductController extends \Controller
                 $_SESSION['success'] = "Thêm sản phẩm thành công!";
                 header("Location: /product/index");
             } else {
-                $_SESSION['error'] = "Lỗi hệ thống khi lưu sản phẩm!";
+                $_SESSION['errors'] = ['system' => "Lỗi MySQL (Database)! Không thể lưu sản phẩm."];
+                $_SESSION['old'] = $_POST;
                 header("Location: /product/create");
             }
             exit();
@@ -172,9 +188,13 @@ class ProductController extends \Controller
     public function edit($id)
     {
         $product = $this->productModel->getById($id);
-        if (!$product) $this->redirect('/product/index');
+        if (!$product) {
+            header("Location: /product/index");
+            exit();
+        }
 
         $categories = $this->categoryModel->index();
+        $brands = $this->brandModel->index(); // Lấy danh sách thương hiệu
 
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
@@ -182,6 +202,7 @@ class ProductController extends \Controller
         $this->view('Admin/AdminProduct/edit', [
             'product' => $product,
             'categories' => $categories,
+            'brands' => $brands, // Truyền brands ra view
             'title' => 'Cập nhật sản phẩm',
             'errors' => $errors
         ]);
@@ -211,17 +232,23 @@ class ProductController extends \Controller
             $data = [
                 'name' => $name,
                 'slug' => $this->createSlug($name),
-                'category_id' => $_POST['category_id'],
-                'price_regular' => $price_regular,
-                'price_sale' => $price_sale,
-                'description' => $_POST['description'],
-                'content' => $_POST['content'],
-                'status' => $_POST['status'],
-                'img_thumbnail' => null
+                'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : 0,
+                'brand_id' => !empty($_POST['brand_id']) ? (int)$_POST['brand_id'] : 0, // Thêm brand_id
+                'price_regular' => !empty($price_regular) ? (float)$price_regular : 0,
+                'price_sale' => !empty($price_sale) ? (float)$price_sale : 0,
+                'description' => $_POST['description'] ?? '',
+                'content' => $_POST['content'] ?? '',
+                'status' => $_POST['status'] ?? 'inactive',
+                'img_thumbnail' => ''
             ];
 
             if (!empty($_FILES['img_thumbnail']['name'])) {
-                $data['img_thumbnail'] = $this->uploadFile($_FILES['img_thumbnail'], 'products');
+                $uploadedImg = $this->uploadFile($_FILES['img_thumbnail'], 'products');
+                if ($uploadedImg) {
+                    $data['img_thumbnail'] = $uploadedImg;
+                }
+            } else {
+                unset($data['img_thumbnail']);
             }
 
             $variants = [];
@@ -229,7 +256,7 @@ class ProductController extends \Controller
                 foreach ($_POST['variant_sku'] as $key => $sku) {
                     if (empty($sku)) continue;
 
-                    $varImg = $_POST['existing_variant_image'][$key] ?? null;
+                    $varImg = $_POST['existing_variant_image'][$key] ?? '';
 
                     if (!empty($_FILES['variant_image']['name'][$key])) {
                         $file = [
@@ -239,7 +266,8 @@ class ProductController extends \Controller
                             'error' => $_FILES['variant_image']['error'][$key],
                             'size' => $_FILES['variant_image']['size'][$key],
                         ];
-                        $varImg = $this->uploadFile($file, 'variants');
+                        $uploadedVar = $this->uploadFile($file, 'variants');
+                        if ($uploadedVar) $varImg = $uploadedVar;
                     }
 
                     $attributes = [
@@ -249,8 +277,8 @@ class ProductController extends \Controller
 
                     $variants[] = [
                         'sku' => $sku,
-                        'price' => $_POST['variant_price'][$key],
-                        'quantity' => $_POST['variant_qty'][$key],
+                        'price' => !empty($_POST['variant_price'][$key]) ? (float)$_POST['variant_price'][$key] : 0,
+                        'quantity' => !empty($_POST['variant_qty'][$key]) ? (int)$_POST['variant_qty'][$key] : 0,
                         'attributes' => json_encode($attributes, JSON_UNESCAPED_UNICODE),
                         'image' => $varImg
                     ];
@@ -279,7 +307,7 @@ class ProductController extends \Controller
                 $_SESSION['success'] = "Cập nhật sản phẩm thành công!";
                 header("Location: /product/index");
             } else {
-                $_SESSION['error'] = "Cập nhật thất bại!";
+                $_SESSION['errors'] = ['system' => "Lỗi MySQL (Database)! Không thể cập nhật."]; 
                 header("Location: /product/edit/$id");
             }
             exit();
@@ -301,7 +329,7 @@ class ProductController extends \Controller
         $targetDir = "storage/uploads/$folder/";
         if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
 
-        $fileName = time() . "_" . basename($file["name"]);
+        $fileName = time() . "_" . uniqid() . "_" . basename($file["name"]);
         $targetFile = $targetDir . $fileName;
 
         if (move_uploaded_file($file["tmp_name"], $targetFile)) {
@@ -312,7 +340,32 @@ class ProductController extends \Controller
 
     private function createSlug($string)
     {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $string)));
-        return $slug;
+        $search = array(
+            '#(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)#',
+            '#(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)#',
+            '#(ì|í|ị|ỉ|ĩ)#',
+            '#(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)#',
+            '#(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)#',
+            '#(ỳ|ý|ỵ|ỷ|ỹ)#',
+            '#(đ)#',
+            '#(À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ)#',
+            '#(È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ)#',
+            '#(Ì|Í|Ị|Ỉ|Ĩ)#',
+            '#(Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ)#',
+            '#(Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ)#',
+            '#(Ỳ|Ý|Ỵ|Ỷ|Ỹ)#',
+            '#(Đ)#',
+            '/[^a-zA-Z0-9\-\_]/'
+        );
+        $replace = array(
+            'a', 'e', 'i', 'o', 'u', 'y', 'd',
+            'a', 'e', 'i', 'o', 'u', 'y', 'd',
+            '-'
+        );
+        $string = preg_replace($search, $replace, $string);
+        $string = preg_replace('/(-)+/', '-', $string);
+        $slug = strtolower(trim($string, '-'));
+        
+        return $slug ?: 'san-pham-' . time();
     }
 }
