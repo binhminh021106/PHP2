@@ -4,14 +4,14 @@ class ProductController extends \Controller
 {
     private $productModel;
     private $categoryModel;
-    private $brandModel; // Khai báo thêm BrandModel
+    private $brandModel; 
 
     public function __construct()
     {
-        // $this->checkAdmin();
+        $this->checkAdmin();
         $this->productModel = $this->model('ProductModel');
         $this->categoryModel = $this->model('CategoryModel');
-        $this->brandModel = $this->model('BrandModel'); // Load model Brand
+        $this->brandModel = $this->model('BrandModel'); 
     }
 
     public function index()
@@ -194,7 +194,7 @@ class ProductController extends \Controller
         }
 
         $categories = $this->categoryModel->index();
-        $brands = $this->brandModel->index(); // Lấy danh sách thương hiệu
+        $brands = $this->brandModel->index();
 
         $errors = $_SESSION['errors'] ?? [];
         unset($_SESSION['errors']);
@@ -202,7 +202,7 @@ class ProductController extends \Controller
         $this->view('Admin/AdminProduct/edit', [
             'product' => $product,
             'categories' => $categories,
-            'brands' => $brands, // Truyền brands ra view
+            'brands' => $brands, 
             'title' => 'Cập nhật sản phẩm',
             'errors' => $errors
         ]);
@@ -233,7 +233,7 @@ class ProductController extends \Controller
                 'name' => $name,
                 'slug' => $this->createSlug($name),
                 'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : 0,
-                'brand_id' => !empty($_POST['brand_id']) ? (int)$_POST['brand_id'] : 0, // Thêm brand_id
+                'brand_id' => !empty($_POST['brand_id']) ? (int)$_POST['brand_id'] : 0,
                 'price_regular' => !empty($price_regular) ? (float)$price_regular : 0,
                 'price_sale' => !empty($price_sale) ? (float)$price_sale : 0,
                 'description' => $_POST['description'] ?? '',

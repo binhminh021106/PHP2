@@ -351,16 +351,9 @@
                         @endif
 
                         <div class="product-actions">
-                            <a href="/detail/index/{{ $product['id'] }}" class="action-btn" title="Xem nhanh">
+                            <a href="/home/detail/{{ $product['id'] }}" class="action-btn" title="Xem nhanh">
                                 <i class="far fa-eye"></i>
                             </a>
-                            <form action="/cart/add" method="POST" class="d-inline">
-                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="action-btn" title="Thêm vào giỏ">
-                                    <i class="fas fa-shopping-bag"></i>
-                                </button>
-                            </form>
                             <a href="#" class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
                             </a>
@@ -370,7 +363,7 @@
                     <div class="product-info">
                         <div class="product-category">{{ $product['category_name'] ?? 'Fashion' }}</div>
                         <h3 class="product-title">
-                            <a href="/detail/index/{{ $product['id'] }}">{{ $product['name'] }}</a>
+                            <a href="/home/detail/{{ $product['id'] }}">{{ $product['name'] }}</a>
                         </h3>
                         <div class="product-price">
                             @if($product['price_sale'] > 0 && $product['price_sale'] < $product['price_regular'])

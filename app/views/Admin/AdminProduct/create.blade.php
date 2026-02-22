@@ -103,7 +103,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nội dung chi tiết</label>
-                            <textarea name="content" class="form-control" rows="5">{{ $old['content'] ?? '' }}</textarea>
+                            <textarea name="content" id="editor_content" class="form-control" rows="5">{{ $old['content'] ?? '' }}</textarea>
                         </div>
                     </div>
 
@@ -177,7 +177,11 @@
     </div>
 </div>
 
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+
 <script>
+    CKEDITOR.replace('editor_content');
+
     document.getElementById('btnAddVariant').addEventListener('click', function() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
