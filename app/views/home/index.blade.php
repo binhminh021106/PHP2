@@ -266,7 +266,7 @@
     <div class="hero-overlay"></div>
     <div class="container-fluid">
         <div class="hero-content">
-            <span class="hero-subtitle">Bộ sưu tập mùa hè 2024</span>
+            <span class="hero-subtitle">Bộ sưu tập mùa hè 2026</span>
             <h1 class="hero-title">Đẳng cấp <br>Thời trang Phái mạnh</h1>
             <p class="mb-4 text-light opacity-75 d-none d-md-block" style="max-width: 500px;">
                 Khám phá phong cách tối giản nhưng đầy tinh tế. Chất liệu cao cấp, thiết kế hiện đại dành cho quý ông thành đạt.
@@ -400,7 +400,7 @@
 <section class="py-5 bg-dark text-white text-center d-flex align-items-center justify-content-center"
     style="min-height: 400px; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80') center/cover fixed;">
     <div>
-        <h2 class="display-4 fw-bold mb-3" style="font-family: var(--font-heading);">Summer Sale 2024</h2>
+        <h2 class="display-4 fw-bold mb-3" style="font-family: var(--font-heading);">Summer Sale 2026</h2>
         <p class="lead mb-4">Giảm giá lên đến 50% cho tất cả sản phẩm áo thun & quần shorts.</p>
         <a href="#" class="btn btn-light px-5 py-3">Săn Sale Ngay</a>
     </div>

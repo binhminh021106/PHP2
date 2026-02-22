@@ -2,12 +2,13 @@
 
 class ProductModel extends Model
 {
-    // Lấy danh sách sản phẩm kèm danh mục
+    // Lấy danh sách sản phẩm kèm danh mục và thương hiệu
     public function getAll()
     {
-        $sql = "SELECT p.*, c.name as category_name 
+        $sql = "SELECT p.*, c.name as category_name, b.name as brand_name 
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE p.deleted_at IS NULL 
                 ORDER BY p.id DESC";
         $conn = $this->connect();
@@ -20,9 +21,10 @@ class ProductModel extends Model
     {
         $conn = $this->connect();
 
-        $sql = "SELECT p.*, c.name as category_name 
+        $sql = "SELECT p.*, c.name as category_name, b.name as brand_name 
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE p.id = :id AND p.deleted_at IS NULL";
 
         $stmt = $conn->prepare($sql);
@@ -66,15 +68,17 @@ class ProductModel extends Model
         try {
             $conn->beginTransaction();
 
-            $sql = "INSERT INTO products (name, slug, category_id, price_regular, price_sale, 
+            // ĐÃ THÊM: Cột brand_id và tham số :brand_id
+            $sql = "INSERT INTO products (name, slug, category_id, brand_id, price_regular, price_sale, 
                     description, content, img_thumbnail, status, created_at) 
-                    VALUES (:name, :slug, :cat_id, :price, :sale, :desc, :content, :thumb, :status, NOW())";
+                    VALUES (:name, :slug, :cat_id, :brand_id, :price, :sale, :desc, :content, :thumb, :status, NOW())";
 
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 'name' => $data['name'],
                 'slug' => $data['slug'],
                 'cat_id' => $data['category_id'],
+                'brand_id' => $data['brand_id'], // Lấy từ Controller truyền sang
                 'price' => $data['price_regular'],
                 'sale' => $data['price_sale'],
                 'desc' => $data['description'],
@@ -114,17 +118,19 @@ class ProductModel extends Model
             return true;
         } catch (Exception $e) {
             $conn->rollBack();
-            error_log("Create Product Error: " . $e->getMessage());
-            return false;
+            // In thẳng lỗi ra màn hình nếu có trục trặc để dễ debug
+            die("<h1 style='color:red;'>LỖI MYSQL (Thêm mới): " . $e->getMessage() . "</h1>"); 
         }
     }
+
     public function updateProduct($id, $data, $newVariants = [], $newGallery = [], $deletedGalleryIds = [])
     {
         $conn = $this->connect();
         try {
             $conn->beginTransaction();
 
-            $sql = "UPDATE products SET name=:name, slug=:slug, category_id=:cat_id, 
+            // ĐÃ THÊM: Cập nhật brand_id=:brand_id
+            $sql = "UPDATE products SET name=:name, slug=:slug, category_id=:cat_id, brand_id=:brand_id,
                     price_regular=:price, price_sale=:sale, description=:desc, 
                     content=:content, status=:status, updated_at=NOW()";
 
@@ -137,6 +143,7 @@ class ProductModel extends Model
                 'name' => $data['name'],
                 'slug' => $data['slug'],
                 'cat_id' => $data['category_id'],
+                'brand_id' => $data['brand_id'], // Lấy từ Controller truyền sang
                 'price' => $data['price_regular'],
                 'sale' => $data['price_sale'],
                 'desc' => $data['description'],
@@ -186,8 +193,8 @@ class ProductModel extends Model
             return true;
         } catch (Exception $e) {
             $conn->rollBack();
-            error_log("Update Product Error: " . $e->getMessage());
-            return false;
+            // In thẳng lỗi ra màn hình nếu có trục trặc để dễ debug
+            die("<h1 style='color:red;'>LỖI MYSQL (Cập nhật): " . $e->getMessage() . "</h1>"); 
         }
     }
 

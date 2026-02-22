@@ -27,18 +27,44 @@
                                 <div class="invalid-feedback">{{ $errors['name'] }}</div>
                             @endif
                         </div>
+                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <!-- Danh mục -->
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Danh mục</label>
-                                <select name="category_id" class="form-select">
+                                <select name="category_id" class="form-select {{ isset($errors['category_id']) ? 'is-invalid' : '' }}">
+                                    <option value="">-- Chọn danh mục --</option>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat['id'] }}" {{ $product['category_id'] == $cat['id'] ? 'selected' : '' }}>
                                             {{ $cat['name'] }}
                                         </option>
                                     @endforeach
                                 </select>
+                                @if(isset($errors['category_id']))
+                                    <div class="invalid-feedback">{{ $errors['category_id'] }}</div>
+                                @endif
                             </div>
-                            <div class="col-md-6 mb-3">
+
+                            <!-- Thương hiệu (ĐÃ THÊM MỚI) -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Thương hiệu <span class="text-danger">*</span></label>
+                                <select name="brand_id" class="form-select {{ isset($errors['brand_id']) ? 'is-invalid' : '' }}">
+                                    <option value="">-- Chọn thương hiệu --</option>
+                                    @if(!empty($brands))
+                                        @foreach($brands as $brand)
+                                        <option value="{{ $brand['id'] }}" {{ (isset($product['brand_id']) && $product['brand_id'] == $brand['id']) ? 'selected' : '' }}>
+                                            {{ $brand['name'] }}                                            
+                                        </option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                @if(isset($errors['brand_id']))
+                                    <div class="invalid-feedback">{{ $errors['brand_id'] }}</div>
+                                @endif
+                            </div>
+
+                            <!-- Trạng thái -->
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Trạng thái</label>
                                 <select name="status" class="form-select">
                                     <option value="active" {{ $product['status'] == 'active' ? 'selected' : '' }}>Đang bán</option>
@@ -46,6 +72,7 @@
                                 </select>
                             </div>
                         </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Giá gốc</label>
@@ -188,7 +215,7 @@
             <td><input type="number" name="variant_qty[]" class="form-control form-control-sm" value="10"></td>
             <td>
                 <input type="hidden" name="existing_variant_image[]" value="">
-                <input type="file" name="variant_image[]" class="form-control form-control-sm">
+                <input type="file" name="variant_image[]" class="form-control form-control-sm" style="width: 150px;">
             </td>
             <td><button type="button" class="btn btn-danger btn-sm btn-remove"><i class="fa-solid fa-trash"></i></button></td>
         `;
