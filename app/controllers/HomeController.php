@@ -91,4 +91,61 @@ class HomeController extends \Controller
         header('Location: /home/contact');
         exit();
     }
+
+    public function detail($id)
+    {
+        $productModel = $this->model('ProductModel');
+        $product = $productModel->getById($id);
+
+        if (!$product) {
+            header("Location: /");
+            exit();
+        }
+
+        $colors = [];
+        $sizes = [];
+        $variantsData = []; 
+
+        if (!empty($product['variants'])) {
+            foreach ($product['variants'] as &$variant) {
+                // Parse attributes
+                $attr = is_string($variant['attributes']) ? json_decode($variant['attributes'], true) : $variant['attributes'];
+                $variant['parsed_attr'] = $attr; 
+
+                $color = $attr['Color'] ?? '';
+                $size = $attr['Size'] ?? '';
+
+                if (!empty($color) && !in_array($color, $colors)) {
+                    $colors[] = $color;
+                }
+                if (!empty($size) && !in_array($size, $sizes)) {
+                    $sizes[] = $size;
+                }
+
+                $variantsData[] = [
+                    'id' => $variant['id'],
+                    'color' => $color,
+                    'size' => $size,
+                    'price' => $variant['price'],
+                    'stock' => $variant['quantity'] ?? 0,
+                    'image' => $variant['image'] 
+                ];
+            }
+        }
+
+        // Lấy danh sách ảnh gallery đã được Model gán sẵn
+        $gallery = $product['gallery'] ?? [];
+
+        $relatedProducts = $productModel->getRelated($product['category_id'], $id, 4);
+
+        $this->view('home/detail', [
+            'title' => $product['name'],
+            'product' => $product,
+            'gallery' => $gallery,
+            'colors' => $colors,
+            'sizes' => $sizes,
+            'variantsJson' => json_encode($variantsData), 
+            'relatedProducts' => $relatedProducts
+        ]);
+    }
 }

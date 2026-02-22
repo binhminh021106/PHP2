@@ -1,11 +1,12 @@
 @extends('layouts.client')
 
-@section('title', $product['name'] ?? 'Chi tiết sản phẩm')
+@section('title', $title ?? 'Chi tiết sản phẩm')
 
 @section('content')
 
 <style>
-    /* Kế thừa bộ biến màu sắc và font chữ từ trang chủ của bạn */
+    @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
     :root {
         --font-base: 'Jost', sans-serif;
         --font-heading: 'Playfair Display', serif;
@@ -17,76 +18,143 @@
     body {
         font-family: var(--font-base);
         color: var(--color-dark);
+        background-color: #fcfcfc;
     }
 
-    .product-title {
+    .btn {
+        border-radius: 0;
+        padding: 12px 28px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1.5px;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .btn-dark {
+        background: var(--color-dark);
+        border-color: var(--color-dark);
+        color: white;
+    }
+
+    .btn-dark:hover {
+        background: #333;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-dark {
+        border: 1px solid var(--color-dark);
+        color: var(--color-dark);
+        background: transparent;
+    }
+
+    .btn-outline-dark:hover {
+        background: var(--color-dark);
+        color: white;
+    }
+
+    .product-detail-title {
         font-family: var(--font-heading);
         font-size: 2.5rem;
         font-weight: 600;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
 
-    .price-block {
+    .product-detail-price {
         font-size: 1.5rem;
-        font-weight: 600;
+        font-weight: 500;
         margin-bottom: 20px;
     }
 
-    .price-sale {
-        color: #d9534f; /* Màu đỏ nổi bật cho giá sale */
+    .product-main-img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        aspect-ratio: 3/4;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        transition: opacity 0.3s ease;
     }
 
-    .price-regular {
-        font-size: 1.1rem;
-        color: #888;
-        text-decoration: line-through;
-        margin-left: 10px;
-        font-weight: 400;
+    /* Meta (Brand, Category) */
+    .product-meta { 
+        font-size: 0.85rem; 
+        letter-spacing: 0.5px; 
+        color: #777; 
+        margin-bottom: 8px; 
+        text-transform: uppercase; 
+    }
+    .product-meta a, .product-meta strong { 
+        color: var(--color-dark); 
+        text-decoration: none; 
     }
 
-    /* Style cho các nút bấm thuộc tính (Size, Color) */
-    .attr-btn {
-        border-radius: 0;
-        padding: 8px 20px;
-        margin-right: 10px;
-        margin-bottom: 10px;
+    /* Gallery Thumbs */
+    .gallery-thumbs { 
+        display: flex; 
+        gap: 10px; 
+        overflow-x: auto; 
+        padding: 10px 0; 
+        scrollbar-width: thin; 
+    }
+    .gallery-thumbs::-webkit-scrollbar { height: 6px; }
+    .gallery-thumbs::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+    .thumb-item { 
+        width: 80px; 
+        height: 106px; 
+        flex-shrink: 0; 
+        cursor: pointer; 
+        border: 2px solid transparent; 
+        opacity: 0.6; 
+        transition: var(--transition); 
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-item:hover, .thumb-item.active { opacity: 1; border-color: var(--color-dark); }
+
+    .variant-group { margin-bottom: 20px; }
+    
+    .variant-label {
+        font-weight: 600;
         text-transform: uppercase;
         font-size: 0.85rem;
         letter-spacing: 1px;
-        transition: var(--transition);
+        margin-bottom: 10px;
+        display: block;
     }
 
-    /* Style khung ảnh */
-    .main-image-wrapper {
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 3/4;
-        background: #f8f9fa;
-        margin-bottom: 15px;
-    }
-
-    .main-image-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .gallery-thumb {
-        width: 100%;
-        aspect-ratio: 3/4;
-        object-fit: cover;
+    .variant-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .variant-options input[type="radio"] { display: none; }
+    .variant-options label {
+        display: inline-block;
+        padding: 8px 16px;
+        border: 1px solid #ddd;
         cursor: pointer;
-        opacity: 0.6;
         transition: var(--transition);
-        border: 1px solid transparent;
+        font-size: 0.9rem;
     }
 
-    .gallery-thumb:hover, .gallery-thumb.active {
-        opacity: 1;
+    .variant-options input[type="radio"]:checked + label {
         border-color: var(--color-dark);
+        background: var(--color-dark);
+        color: white;
     }
 
-    /* Kế thừa Product Card từ trang chủ cho phần Sản phẩm liên quan */
+    .disabled-label {
+        opacity: 0.3;
+        pointer-events: none;
+        text-decoration: line-through;
+        background: #f8f9fa !important;
+        border-color: #e9ecef !important;
+        color: #6c757d !important;
+    }
+
+    .quantity-selector { display: inline-flex; border: 1px solid #ddd; align-items: center; }
+    .quantity-selector button { background: transparent; border: none; padding: 10px 15px; cursor: pointer; font-size: 1rem; transition: var(--transition); }
+    .quantity-selector button:hover { background: #f0f0f0; }
+    .quantity-selector input { width: 50px; text-align: center; border: none; font-weight: 500; pointer-events: none; }
+    .product-description { line-height: 1.8; color: #555; margin-bottom: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+
+    .section-title { font-family: var(--font-heading); font-size: 2.2rem; text-align: center; margin-bottom: 30px; }
     .product-card { background: transparent; border: none; margin-bottom: 30px; }
     .product-thumb { position: relative; overflow: hidden; aspect-ratio: 3/4; }
     .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -94,143 +162,172 @@
     .product-card:hover .product-actions { opacity: 1; transform: translateY(0); }
     .action-btn { background: white; color: var(--color-dark); width: 45px; height: 45px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 5px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); transition: var(--transition); text-decoration: none; }
     .action-btn:hover { background: var(--color-dark); color: white; }
+    .product-info { padding-top: 15px; text-align: center; }
+    .product-category { font-size: 0.75rem; text-transform: uppercase; color: #888; letter-spacing: 1px; }
+    .product-title { font-family: var(--font-base); font-size: 1rem; font-weight: 500; margin: 5px 0; }
+    .product-title a { color: var(--color-dark); text-decoration: none; transition: color 0.3s; }
+    .product-title a:hover { color: var(--color-accent); }
+    .product-price { font-weight: 600; font-size: 1rem; }
 </style>
 
-<!-- BREADCRUMB -->
-<div class="bg-light py-3 border-bottom">
+<div class="bg-light py-3 border-bottom mb-5">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-dark text-decoration-none">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="#" class="text-dark text-decoration-none"><?= $product['category_name'] ?? 'Danh mục' ?></a></li>
-                <li class="breadcrumb-item active" aria-current="page"><?= $product['name'] ?></li>
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-dark">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/shop" class="text-decoration-none text-dark">Sản phẩm</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ $product['name'] ?? '' }}</li>
             </ol>
         </nav>
     </div>
 </div>
 
-<section class="py-5">
-    <div class="container">
-        <div class="row gx-5">
-            <!-- CỘT TRÁI: HÌNH ẢNH -->
-            <div class="col-md-6 mb-4 mb-md-0">
-                <div class="main-image-wrapper">
-                    <?php 
-                        $mainImg = !empty($product['img_thumbnail']) ? '/storage/uploads/products/' . $product['img_thumbnail'] : 'https://placehold.co/600x800?text=No+Image';
-                    ?>
-                    <img id="mainImage" src="<?= $mainImg ?>" alt="<?= $product['name'] ?>">
+<div class="container mb-5">
+    <div class="row g-5">
+        <div class="col-md-6">
+            @php
+                $mainImg = !empty($product['img_thumbnail']) 
+                    ? '/storage/uploads/products/' . $product['img_thumbnail'] 
+                    : 'https://placehold.co/800x1066?text=No+Image';
+            @endphp
+            
+            <div class="mb-2">
+                <img src="{{ $mainImg }}" id="main-product-image" data-original="{{ $mainImg }}" alt="{{ $product['name'] ?? 'Product' }}" class="product-main-img img-fluid">
+            </div>
+
+            <div class="gallery-thumbs">
+                <div class="thumb-item active" onclick="changeGalleryImage('{{ $mainImg }}', this)">
+                    <img src="{{ $mainImg }}" alt="Thumbnail">
                 </div>
                 
-                <!-- Thư viện ảnh nhỏ -->
-                @if(!empty($product['gallery']))
-                <div class="row g-2 mt-2">
-                    <!-- Ảnh thumbnail chính -->
-                    <div class="col-3">
-                        <img src="<?= $mainImg ?>" class="gallery-thumb active" onclick="changeMainImage(this.src)">
-                    </div>
-                    <!-- Các ảnh gallery -->
-                    @foreach($product['gallery'] as $img)
-                    <div class="col-3">
-                        <img src="/storage/uploads/gallery/<?= $img['image_path'] ?>" class="gallery-thumb" onclick="changeMainImage(this.src)">
-                    </div>
+                @if(!empty($gallery))
+                    @foreach($gallery as $gImage)
+                        @php 
+                            // Lấy tên ảnh từ cột image_path
+                            $gPath = '/storage/uploads/gallery/' . $gImage['image_path']; 
+                        @endphp
+                        <div class="thumb-item" onclick="changeGalleryImage('{{ $gPath }}', this)">
+                            <img src="{{ $gPath }}" alt="Gallery">
+                        </div>
                     @endforeach
-                </div>
                 @endif
             </div>
+        </div>
 
-            <!-- CỘT PHẢI: THÔNG TIN SẢN PHẨM -->
-            <div class="col-md-6">
-                <h1 class="product-title"><?= $product['name'] ?></h1>
-                
-                <div class="price-block">
-                    <span id="productPrice" class="price-sale"><?= number_format($product['price_sale'], 0, ',', '.') ?> đ</span>
-                    @if($product['price_regular'] > $product['price_sale'])
-                        <span id="productRegularPrice" class="price-regular"><?= number_format($product['price_regular'], 0, ',', '.') ?> đ</span>
-                    @endif
-                </div>
-
-                <div class="mb-4 text-muted">
-                    <p><?= $product['description'] ?></p>
-                </div>
-
-                <!-- Khu vực render các nút chọn Size, Color bằng JS -->
-                <div id="attributesContainer" class="mb-4"></div>
-
-                <div class="mb-3">
-                    <span class="text-muted small text-uppercase">Tình trạng: </span>
-                    <span id="productQuantityText" class="fw-bold">Vui lòng chọn phân loại</span>
-                </div>
-
-                <!-- FORM ĐẶT HÀNG -->
-                <form action="/cart/add" method="POST" class="mb-5 border-top pt-4">
-                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                    <!-- JS sẽ tự động điền ID của biến thể vào đây -->
-                    <input type="hidden" name="variant_id" id="selectedVariantId" value="">
-
-                    <div class="d-flex align-items-center mb-4">
-                        <span class="me-3 text-uppercase small fw-bold">Số lượng:</span>
-                        <div class="input-group" style="width: 130px;">
-                            <button class="btn btn-outline-dark rounded-0 px-3" type="button" onclick="decreaseQty()">-</button>
-                            <input type="text" name="quantity" id="qtyInput" class="form-control text-center border-dark rounded-0" value="1" readonly>
-                            <button class="btn btn-outline-dark rounded-0 px-3" type="button" onclick="increaseQty()">+</button>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" id="btnAddToCart" class="btn btn-dark btn-lg flex-grow-1" disabled>
-                            <i class="fas fa-shopping-bag me-2"></i> THÊM VÀO GIỎ
-                        </button>
-                        <button type="button" class="btn btn-outline-dark btn-lg px-4">
-                            <i class="far fa-heart"></i>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Tab Chi tiết / Nội dung -->
-                <ul class="nav nav-tabs rounded-0 mb-3" id="productTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active text-dark rounded-0 fw-bold text-uppercase" data-bs-toggle="tab" data-bs-target="#desc">Mô tả chi tiết</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-dark rounded-0 fw-bold text-uppercase" data-bs-toggle="tab" data-bs-target="#shipping">Giao hàng & Đổi trả</button>
-                    </li>
-                </ul>
-                <div class="tab-content" id="productTabContent">
-                    <div class="tab-pane fade show active text-muted" id="desc">
-                        <?= $product['content'] ?>
-                    </div>
-                    <div class="tab-pane fade text-muted" id="shipping">
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><i class="fas fa-truck me-2"></i> Miễn phí giao hàng cho đơn từ 500k.</li>
-                            <li class="mb-2"><i class="fas fa-box-open me-2"></i> Đổi trả dễ dàng trong vòng 30 ngày.</li>
-                            <li><i class="fas fa-shield-alt me-2"></i> Đảm bảo hàng chính hãng 100%.</li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="col-md-6">
+            <div class="product-meta">
+                <span>Danh mục: <a href="#">{{ $product['category_name'] ?? 'Chưa phân loại' }}</a></span> &nbsp;|&nbsp; 
+                <span>Thương hiệu: <strong>{{ $product['brand_name'] ?? 'Đang cập nhật' }}</strong></span>
             </div>
+            
+            <h1 class="product-detail-title">{{ $product['name'] ?? '' }}</h1>
+            
+            <div class="product-detail-price" id="display-price">
+                @if(isset($product['price_sale']) && $product['price_sale'] > 0 && $product['price_sale'] < $product['price_regular'])
+                    <span class="text-danger">{{ number_format($product['price_sale'], 0, ',', '.') }}đ</span>
+                    <del class="text-muted ms-2 fs-6 fw-normal">{{ number_format($product['price_regular'], 0, ',', '.') }}đ</del>
+                @else
+                    <span>{{ number_format($product['price_regular'] ?? 0, 0, ',', '.') }}đ</span>
+                @endif
+            </div>
+            
+            <p class="text-muted small mb-4">Tồn kho: <span id="display-stock" class="fw-bold text-danger">Vui lòng chọn Màu và Kích thước</span></p>
+
+            <form action="/cart/add" method="POST" class="mt-4">
+                <input type="hidden" name="product_id" value="{{ $product['id'] ?? '' }}">
+                <input type="hidden" name="variant_id" id="selected_variant_id" value="">
+
+                @if(!empty($colors))
+                <div class="variant-group">
+                    <span class="variant-label">Màu sắc</span>
+                    <div class="variant-options">
+                        @foreach($colors as $index => $color)
+                            <input type="radio" class="color-select" name="color" id="color_{{ $index }}" value="{{ $color }}" required>
+                            <label for="color_{{ $index }}">{{ $color }}</label>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                @if(!empty($sizes))
+                <div class="variant-group">
+                    <span class="variant-label">Kích thước</span>
+                    <div class="variant-options">
+                        @foreach($sizes as $index => $size)
+                            <input type="radio" class="size-select" name="size" id="size_{{ $index }}" value="{{ $size }}" required>
+                            <label for="size_{{ $index }}" id="label_size_{{ $index }}">{{ $size }}</label>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                <div class="d-flex align-items-center gap-3 mt-4 mb-4">
+                    <div class="quantity-selector">
+                        <button type="button" onclick="decreaseQty()">-</button>
+                        <input type="text" name="quantity" id="qty-input" value="1" readonly>
+                        <button type="button" onclick="increaseQty()">+</button>
+                    </div>
+                    <button type="submit" class="btn btn-dark flex-grow-1 py-3" id="btn-submit" disabled>
+                        <i class="fas fa-shopping-cart me-2"></i> Chọn Màu / Size
+                    </button>
+                </div>
+            </form>
+
+            <div class="product-description">
+                <?php echo isset($product['description']) ? $product['description'] : 'Chưa có mô tả cho sản phẩm này.'; ?>
+            </div>
+            
+            <ul class="list-unstyled text-muted small mt-4 pt-3 border-top">
+                <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Cam kết chính hãng 100%</li>
+                <li class="mb-2"><i class="fas fa-truck text-success me-2"></i> Giao hàng toàn quốc từ 2-4 ngày</li>
+                <li><i class="fas fa-sync text-success me-2"></i> Hỗ trợ đổi size trong vòng 7 ngày</li>
+            </ul>
         </div>
     </div>
-</section>
+</div>
 
-<!-- SẢN PHẨM LIÊN QUAN -->
 @if(!empty($relatedProducts) && count($relatedProducts) > 0)
-<section class="py-5 bg-light">
+<section class="py-5 bg-white border-top">
     <div class="container">
-        <h2 class="text-center mb-5" style="font-family: var(--font-heading);">Có thể bạn sẽ thích</h2>
+        <h2 class="section-title">Sản Phẩm Tương Tự</h2>
         <div class="row">
-            @foreach($relatedProducts as $rel)
+            @foreach($relatedProducts as $related)
             <div class="col-6 col-md-3">
-                <div class="product-card text-center">
+                <div class="product-card">
                     <div class="product-thumb">
-                        <?php $relImg = !empty($rel['img_thumbnail']) ? '/storage/uploads/products/' . $rel['img_thumbnail'] : 'https://placehold.co/400x533'; ?>
-                        <img src="<?= $relImg ?>" alt="<?= $rel['name'] ?>">
+                        @php
+                            $relImg = !empty($related['img_thumbnail']) 
+                                ? '/storage/uploads/products/' . $related['img_thumbnail'] 
+                                : 'https://placehold.co/400x533?text=No+Image';
+                        @endphp
+                        <img src="{{ $relImg }}" alt="{{ $related['name'] ?? '' }}">
+                        
+                        @if(isset($related['price_sale']) && $related['price_sale'] > 0)
+                            <span class="position-absolute top-0 start-0 bg-dark text-white small px-2 py-1 m-2">SALE</span>
+                        @endif
+
                         <div class="product-actions">
-                            <a href="/product/detail/<?= $rel['id'] ?>" class="action-btn" title="Xem nhanh"><i class="far fa-eye"></i></a>
+                            <a href="/home/detail/{{ $related['id'] ?? '' }}" class="action-btn" title="Xem nhanh">
+                                <i class="far fa-eye"></i>
+                            </a>
+                            <a href="#" class="action-btn" title="Yêu thích">
+                                <i class="far fa-heart"></i>
+                            </a>
                         </div>
                     </div>
-                    <div class="product-info mt-3">
-                        <h3 class="product-title" style="font-size: 1rem;"><a href="/product/detail/<?= $rel['id'] ?>" class="text-dark text-decoration-none"><?= $rel['name'] ?></a></h3>
-                        <div class="fw-bold"><?= number_format($rel['price_sale'] ?: $rel['price_regular'], 0, ',', '.') ?> đ</div>
+                    <div class="product-info">
+                        <div class="product-category">{{ $related['category_name'] ?? 'Fashion' }}</div>
+                        <h3 class="product-title">
+                            <a href="/home/detail/{{ $related['id'] ?? '' }}">{{ $related['name'] ?? '' }}</a>
+                        </h3>
+                        <div class="product-price">
+                            @if(isset($related['price_sale']) && $related['price_sale'] > 0 && $related['price_sale'] < $related['price_regular'])
+                                <span class="text-danger">{{ number_format($related['price_sale'], 0, ',', '.') }}đ</span>
+                                <del class="text-muted small ms-2 fw-normal">{{ number_format($related['price_regular'], 0, ',', '.') }}đ</del>
+                            @else
+                                <span>{{ number_format($related['price_regular'] ?? 0, 0, ',', '.') }}đ</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -240,160 +337,140 @@
 </section>
 @endif
 
-<!-- JAVASCRIPT XỬ LÝ BIẾN THỂ (SIZE/COLOR) -->
 <script>
-    const variantsData = <?= json_encode($product['variants'] ?? []) ?>;
-    const defaultImage = "<?= $mainImg ?>";
-    
-    let availableAttributes = {};
-    let selectedAttributes = {};
-
-    function initVariants() {
-        if (variantsData && variantsData.length > 0) {
-            extractAttributes();
-            renderAttributesUI();
-        } else {
-            // Không có biến thể -> Sản phẩm đơn giản
-            document.getElementById('productQuantityText').innerText = "Sẵn hàng (Sản phẩm tiêu chuẩn)";
-            document.getElementById('productQuantityText').className = "text-success fw-bold";
-            document.getElementById('btnAddToCart').disabled = false;
-        }
-    }
-
-    // Trích xuất các thuộc tính (Color, Size) từ JSON của Database
-    function extractAttributes() {
-        variantsData.forEach(variant => {
-            const attrs = variant.attributes; 
-            for (const key in attrs) {
-                if (!availableAttributes[key]) {
-                    availableAttributes[key] = new Set();
-                }
-                availableAttributes[key].add(attrs[key]);
-            }
-        });
-
-        // Set mặc định giá trị ban đầu là null
-        for (const key in availableAttributes) {
-            selectedAttributes[key] = null;
-        }
-    }
-
-    // Vẽ giao diện các nút bấm (S, M, L, Xanh, Đỏ...)
-    function renderAttributesUI() {
-        const container = document.getElementById('attributesContainer');
-        container.innerHTML = '';
-
-        for (const attrName in availableAttributes) {
-            const valuesArray = Array.from(availableAttributes[attrName]);
-            
-            let buttonsHTML = valuesArray.map(val => {
-                // Mặc định là btn-outline-dark (chưa chọn)
-                return `<button type="button" class="btn btn-outline-dark attr-btn" 
-                            onclick="handleSelect('${attrName}', '${val}')" 
-                            data-attr="${attrName}" data-val="${val}">
-                            ${val}
-                        </button>`;
-            }).join('');
-
-            container.innerHTML += `
-                <div class="mb-3">
-                    <div class="text-uppercase small fw-bold mb-2">${attrName}:</div>
-                    <div class="d-flex flex-wrap">${buttonsHTML}</div>
-                </div>
-            `;
-        }
-    }
-
-    // Xử lý khi user click vào 1 nút thuộc tính
-    function handleSelect(attrName, attrValue) {
-        selectedAttributes[attrName] = attrValue;
+    // Xử lý khi click vào ảnh Gallery
+    window.changeGalleryImage = function(src, element) {
+        const mainImgEl = document.getElementById('main-product-image');
         
-        // Cập nhật UI: Thêm class btn-dark cho nút được chọn, gỡ đi ở nút khác
-        const buttons = document.querySelectorAll(`button[data-attr="${attrName}"]`);
-        buttons.forEach(btn => {
-            if (btn.getAttribute('data-val') === attrValue) {
-                btn.classList.remove('btn-outline-dark');
-                btn.classList.add('btn-dark'); // Màu đen của Bootstrap
-            } else {
-                btn.classList.remove('btn-dark');
-                btn.classList.add('btn-outline-dark');
-            }
-        });
+        mainImgEl.style.opacity = 0.5;
+        setTimeout(() => {
+            mainImgEl.src = src;
+            mainImgEl.style.opacity = 1;
+        }, 150);
 
-        checkMatchingVariant();
-    }
+        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+    };
 
-    // Kiểm tra xem tổ hợp khách chọn có ra được 1 Biến thể cụ thể không
-    function checkMatchingVariant() {
-        const isAllSelected = Object.values(selectedAttributes).every(val => val !== null);
-        if (!isAllSelected) return;
-
-        const matched = variantsData.find(variant => {
-            let isMatch = true;
-            for (const key in selectedAttributes) {
-                if (variant.attributes[key] !== selectedAttributes[key]) {
-                    isMatch = false; break;
-                }
-            }
-            return isMatch;
-        });
-
-        const btnAdd = document.getElementById('btnAddToCart');
-        const qtyText = document.getElementById('productQuantityText');
+    document.addEventListener("DOMContentLoaded", function() {
+        const variants = <?php echo isset($variantsJson) ? $variantsJson : '[]'; ?>;
         
-        if (matched) {
-            // Đổi giá
-            document.getElementById('productPrice').innerText = new Intl.NumberFormat('vi-VN').format(matched.price) + ' đ';
+        const colorInputs = document.querySelectorAll('.color-select');
+        const sizeInputs = document.querySelectorAll('.size-select');
+        const displayPrice = document.getElementById('display-price');
+        const displayStock = document.getElementById('display-stock');
+        const mainImgEl = document.getElementById('main-product-image');
+        const btnSubmit = document.getElementById('btn-submit');
+        const variantIdInput = document.getElementById('selected_variant_id');
+
+        const formatMoney = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+
+        colorInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const selectedColor = this.value;
+                
+                const availableSizes = variants
+                    .filter(v => v.color === selectedColor)
+                    .map(v => v.size);
+
+                let firstValidSize = null;
+
+                sizeInputs.forEach(sizeInput => {
+                    const sizeLabel = document.querySelector(`label[for="${sizeInput.id}"]`);
+                    
+                    if (availableSizes.includes(sizeInput.value)) {
+                        sizeLabel.classList.remove('disabled-label');
+                        sizeInput.disabled = false;
+                        if (!firstValidSize) firstValidSize = sizeInput;
+                    } else {
+                        sizeLabel.classList.add('disabled-label');
+                        sizeInput.disabled = true;
+                        sizeInput.checked = false;
+                    }
+                });
+
+                const currentCheckedSize = document.querySelector('.size-select:checked');
+                if (!currentCheckedSize && firstValidSize) {
+                    firstValidSize.checked = true;
+                }
+
+                updateProductInfo();
+            });
+        });
+
+        sizeInputs.forEach(input => {
+            input.addEventListener('change', updateProductInfo);
+        });
+
+        function updateProductInfo() {
+            const selectedColor = document.querySelector('.color-select:checked')?.value;
+            const selectedSize = document.querySelector('.size-select:checked')?.value;
+
+            if (!selectedColor || !selectedSize) return;
+
+            const matchedVariant = variants.find(v => v.color === selectedColor && v.size === selectedSize);
+
+            if (matchedVariant) {
+                if (matchedVariant.price > 0) {
+                    displayPrice.innerHTML = `<span class="text-danger fw-bold">${formatMoney(matchedVariant.price)}</span>`;
+                }
+                
+                displayStock.className = "fw-bold text-success";
+                displayStock.innerText = matchedVariant.stock + " sản phẩm";
+                
+                if (matchedVariant.image) {
+                    mainImgEl.style.opacity = 0.5;
+                    setTimeout(() => {
+                        mainImgEl.src = '/storage/uploads/variants/' + matchedVariant.image;
+                        mainImgEl.style.opacity = 1;
+                    }, 150);
+                    // Bỏ highlight ở phần gallery khi chọn biến thể có ảnh
+                    document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+                } else {
+                    mainImgEl.src = mainImgEl.getAttribute('data-original');
+                }
+                
+                variantIdInput.value = matchedVariant.id;
+
+                if (matchedVariant.stock > 0) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<i class="fas fa-shopping-cart me-2"></i> Thêm Vào Giỏ';
+                } else {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = 'Hết hàng';
+                    displayStock.className = "fw-bold text-danger";
+                    displayStock.innerText = "0 sản phẩm (Hết hàng)";
+                }
+
+                document.getElementById('qty-input').value = 1;
+            }
+        }
+
+        window.increaseQty = function() {
+            let input = document.getElementById('qty-input');
+            let maxStock = parseInt(displayStock.innerText) || 0; 
+            let value = parseInt(input.value, 10);
             
-            // Đổi ảnh nếu biến thể có ảnh riêng
-            if (matched.image && matched.image.trim() !== '') {
-                document.getElementById('mainImage').src = '/storage/uploads/variants/' + matched.image;
-            } else {
-                document.getElementById('mainImage').src = defaultImage;
+            if (!document.querySelector('.color-select:checked') || !document.querySelector('.size-select:checked')) {
+                alert("Vui lòng chọn Màu và Kích thước trước!");
+                return;
             }
 
-            // Lưu ID biến thể để chuẩn bị gửi Form
-            document.getElementById('selectedVariantId').value = matched.id;
-
-            // Kiểm tra kho
-            if (matched.quantity > 0) {
-                qtyText.innerText = "Còn hàng (" + matched.quantity + " sản phẩm)";
-                qtyText.className = "text-success fw-bold";
-                btnAdd.disabled = false;
-            } else {
-                qtyText.innerText = "Hết hàng";
-                qtyText.className = "text-danger fw-bold";
-                btnAdd.disabled = true;
+            if(value < maxStock) {
+                input.value = value + 1;
+            } else if (maxStock > 0) {
+                alert("Số lượng bạn chọn vượt quá tồn kho hiện tại!");
             }
-        } else {
-            qtyText.innerText = "Phân loại không tồn tại";
-            qtyText.className = "text-danger fw-bold";
-            btnAdd.disabled = true;
-        }
-    }
+        };
 
-    // Logic đổi ảnh main khi click vào ảnh thumbnail
-    function changeMainImage(src) {
-        document.getElementById('mainImage').src = src;
-        // Bỏ active cũ, thêm active mới
-        document.querySelectorAll('.gallery-thumb').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
-    }
-
-    // Logic Tăng/Giảm số lượng
-    function increaseQty() {
-        let input = document.getElementById('qtyInput');
-        input.value = parseInt(input.value) + 1;
-    }
-    function decreaseQty() {
-        let input = document.getElementById('qtyInput');
-        if (parseInt(input.value) > 1) {
-            input.value = parseInt(input.value) - 1;
-        }
-    }
-
-    // Chạy khi load trang
-    document.addEventListener("DOMContentLoaded", initVariants);
+        window.decreaseQty = function() {
+            let input = document.getElementById('qty-input');
+            let value = parseInt(input.value, 10);
+            if (value > 1) {
+                input.value = value - 1;
+            }
+        };
+    });
 </script>
 
 @endsection

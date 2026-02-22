@@ -6,108 +6,116 @@ class CartController extends Controller
 
     public function __construct()
     {
-        // Khởi tạo model (Cách gọi tuỳ thuộc vào cấu trúc framework của bạn)
-        // Ví dụ: $this->cartModel = $this->model('CartModel');
         $this->cartModel = new CartModel();
         
-        // Đảm bảo session đã được khởi động để quản lý khách vãng lai
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
         }
         
-        // Tạo một session ID riêng cho khách nếu chưa có
-        if (!isset($_SESSION['guest_session_id'])) {
-            $_SESSION['guest_session_id'] = session_create_id();
+        $userId = $this->getUserId();
+
+        if (!$userId) {
+            $_SESSION['error'] = "Vui lòng đăng nhập để sử dụng giỏ hàng!";
+            header('Location: /auth/login'); 
+            exit;
         }
     }
 
     /**
-     * HELPER: Lấy ID giỏ hàng hiện tại (hoặc tự tạo mới nếu chưa có)
+     * Hàm tự động tìm ID người dùng từ Session
+     * (Giúp tương thích với nhiều cách viết Login khác nhau)
+     */
+    private function getUserId()
+    {
+        if (isset($_SESSION['user_id'])) return $_SESSION['user_id'];
+        if (isset($_SESSION['user']) && is_array($_SESSION['user'])) return $_SESSION['user']['id'] ?? null;
+        if (isset($_SESSION['user']) && is_object($_SESSION['user'])) return $_SESSION['user']->id ?? null;
+        if (isset($_SESSION['id'])) return $_SESSION['id'];
+        if (isset($_SESSION['account_id'])) return $_SESSION['account_id'];
+        
+        return null; 
+    }
+
+    /**
+     * Lấy ID giỏ hàng của User hiện tại (Tạo mới nếu chưa có)
      */
     private function getCurrentCartId()
     {
-        // Kiểm tra xem user đã đăng nhập chưa (Giả sử bạn lưu id user ở $_SESSION['user_id'])
-        $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-        $sessionId = $_SESSION['guest_session_id'];
+        $userId = $this->getUserId(); 
 
-        // 1. Tìm giỏ hàng trong database
-        $cart = $this->cartModel->getCart($userId, $sessionId);
+        $cart = $this->cartModel->getCart($userId, null);
 
         if ($cart) {
-            return $cart['id']; // Trả về ID nếu đã có
+            return $cart['id']; 
         }
 
-        // 2. Nếu chưa có, tạo giỏ hàng mới và trả về ID vừa tạo
-        return $this->cartModel->createCart($userId, $sessionId);
+        return $this->cartModel->createCart($userId, null);
     }
 
     /**
      * HIỂN THỊ TRANG GIỎ HÀNG
-     * URL: /cart hoặc /cart/index
      */
     public function index()
     {
-        // 1. Lấy ID giỏ hàng
         $cartId = $this->getCurrentCartId();
         
-        // 2. Lấy danh sách sản phẩm từ Model
         $cartItems = $this->cartModel->getCartItems($cartId);
         
-        // 3. Tính tổng tiền (Tuỳ chọn: bạn có thể tính luôn ở View hoặc tính ở đây truyền sang)
         $totalPrice = 0;
-        foreach ($cartItems as $item) {
-            $totalPrice += $item['price'] * $item['quantity'];
+        if (!empty($cartItems)) {
+            foreach ($cartItems as &$item) {
+                $item['parsed_attr'] = is_string($item['attributes']) ? json_decode($item['attributes'], true) : [];
+                $totalPrice += $item['price'] * $item['quantity'];
+            }
         }
 
-        // 4. Gọi View hiển thị (Điều chỉnh lại hàm view() cho khớp với framework của bạn)
-        /*
-        $this->view('cart/index', [
-            'cartItems' => $cartItems,
-            'totalPrice' => $totalPrice
-        ]);
-        */
+        $successMsg = $_SESSION['success'] ?? '';
+        $errorMsg = $_SESSION['error'] ?? '';
+        unset($_SESSION['success'], $_SESSION['error']);
 
-        // Đoạn này in ra màn hình để bạn dễ debug test dữ liệu:
-        echo "<h3>Dữ liệu giỏ hàng:</h3>";
-        echo "<pre>";
-        print_r($cartItems);
-        echo "<b>Tổng tiền: </b>" . number_format($totalPrice) . " đ";
-        echo "</pre>";
+        $this->view('cart/index', [
+            'title' => 'Giỏ hàng của bạn',
+            'cartItems' => $cartItems,
+            'totalPrice' => $totalPrice,
+            'successMsg' => $successMsg,
+            'errorMsg' => $errorMsg
+        ]);
     }
 
     /**
      * XỬ LÝ THÊM SẢN PHẨM VÀO GIỎ
-     * Nơi nhận dữ liệu form POST từ trang Chi tiết sản phẩm
-     * URL: /cart/add
      */
     public function add()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Lấy dữ liệu người dùng gửi lên
             $productId = $_POST['product_id'] ?? null;
             $variantId = $_POST['variant_id'] ?? null;
-            $quantity = $_POST['quantity'] ?? 1;
+            $quantity = (int)($_POST['quantity'] ?? 1);
 
-            if ($productId && $variantId) {
-                // Lấy/Tạo ID giỏ hàng
+            // Nếu đầy đủ dữ liệu hợp lệ
+            if ($productId && $variantId && $quantity > 0) {
                 $cartId = $this->getCurrentCartId();
                 
                 // Gọi model để lưu vào database
                 $this->cartModel->addToCart($cartId, $productId, $variantId, $quantity);
                 
-                // Chuyển hướng người dùng về trang giỏ hàng
-                header('Location: /cart');
+                $_SESSION['success'] = "Đã thêm sản phẩm vào giỏ hàng!";
+                header('Location: /cart'); 
                 exit;
+            } else {
+                $_SESSION['error'] = "Lỗi: Không xác định được phân loại sản phẩm!";
             }
+        } else {
+            $_SESSION['error'] = "Phương thức không hợp lệ!";
         }
         
-        // Nếu không có POST data hoặc thiếu ID
-        echo "Dữ liệu không hợp lệ!";
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/';
+        header("Location: $referer");
+        exit;
     }
 
     /**
      * CẬP NHẬT SỐ LƯỢNG (Khi khách bấm + / -)
-     * URL: /cart/update
      */
     public function update()
     {
@@ -117,28 +125,27 @@ class CartController extends Controller
 
             if ($cartItemId) {
                 if ($quantity > 0) {
-                    // Cập nhật số lượng mới
                     $this->cartModel->updateQuantity($cartItemId, $quantity);
+                    $_SESSION['success'] = "Đã cập nhật số lượng!";
                 } else {
-                    // Nếu khách giảm số lượng về 0 -> Xóa luôn sản phẩm đó
                     $this->cartModel->removeCartItem($cartItemId);
+                    $_SESSION['success'] = "Đã xóa sản phẩm khỏi giỏ hàng!";
                 }
             }
         }
         
-        // Reload lại trang giỏ hàng
         header('Location: /cart');
         exit;
     }
 
     /**
      * XÓA MỘT SẢN PHẨM KHỎI GIỎ HÀNG
-     * URL: /cart/delete/{cartItemId}
      */
     public function delete($cartItemId = null)
     {
         if ($cartItemId) {
             $this->cartModel->removeCartItem($cartItemId);
+            $_SESSION['success'] = "Đã xóa sản phẩm khỏi giỏ hàng!";
         }
         
         header('Location: /cart');

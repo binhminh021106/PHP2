@@ -68,7 +68,6 @@ class ProductModel extends Model
         try {
             $conn->beginTransaction();
 
-            // ĐÃ THÊM: Cột brand_id và tham số :brand_id
             $sql = "INSERT INTO products (name, slug, category_id, brand_id, price_regular, price_sale, 
                     description, content, img_thumbnail, status, created_at) 
                     VALUES (:name, :slug, :cat_id, :brand_id, :price, :sale, :desc, :content, :thumb, :status, NOW())";
@@ -78,7 +77,7 @@ class ProductModel extends Model
                 'name' => $data['name'],
                 'slug' => $data['slug'],
                 'cat_id' => $data['category_id'],
-                'brand_id' => $data['brand_id'], // Lấy từ Controller truyền sang
+                'brand_id' => $data['brand_id'], 
                 'price' => $data['price_regular'],
                 'sale' => $data['price_sale'],
                 'desc' => $data['description'],
@@ -118,7 +117,6 @@ class ProductModel extends Model
             return true;
         } catch (Exception $e) {
             $conn->rollBack();
-            // In thẳng lỗi ra màn hình nếu có trục trặc để dễ debug
             die("<h1 style='color:red;'>LỖI MYSQL (Thêm mới): " . $e->getMessage() . "</h1>"); 
         }
     }
@@ -129,7 +127,6 @@ class ProductModel extends Model
         try {
             $conn->beginTransaction();
 
-            // ĐÃ THÊM: Cập nhật brand_id=:brand_id
             $sql = "UPDATE products SET name=:name, slug=:slug, category_id=:cat_id, brand_id=:brand_id,
                     price_regular=:price, price_sale=:sale, description=:desc, 
                     content=:content, status=:status, updated_at=NOW()";
@@ -143,7 +140,7 @@ class ProductModel extends Model
                 'name' => $data['name'],
                 'slug' => $data['slug'],
                 'cat_id' => $data['category_id'],
-                'brand_id' => $data['brand_id'], // Lấy từ Controller truyền sang
+                'brand_id' => $data['brand_id'], 
                 'price' => $data['price_regular'],
                 'sale' => $data['price_sale'],
                 'desc' => $data['description'],
@@ -193,7 +190,6 @@ class ProductModel extends Model
             return true;
         } catch (Exception $e) {
             $conn->rollBack();
-            // In thẳng lỗi ra màn hình nếu có trục trặc để dễ debug
             die("<h1 style='color:red;'>LỖI MYSQL (Cập nhật): " . $e->getMessage() . "</h1>"); 
         }
     }
