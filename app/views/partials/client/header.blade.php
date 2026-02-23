@@ -123,8 +123,15 @@
                     <a class="nav-link" href="#"><i class="fas fa-search"></i></a>
                 </li>
 
+                <!-- NÚT WISHLIST ĐƯỢC THÊM VÀO ĐÂY -->
                 <li class="nav-item position-relative me-2">
-                    <a class="nav-link" href="/cart">
+                    <a class="nav-link" href="/wishlist" title="Danh sách yêu thích">
+                        <i class="far fa-heart"></i>
+                    </a>
+                </li>
+
+                <li class="nav-item position-relative me-2">
+                    <a class="nav-link" href="/cart" title="Giỏ hàng">
                         <i class="fas fa-shopping-bag"></i>
                         <?php
                         $cartCount = 0;

@@ -3,48 +3,65 @@
 class WishlistModel extends Model
 {
     private $table = 'wishlists';
-    public function index()
+
+    /**
+     * Lấy danh sách yêu thích của người dùng
+     */
+    public function getWishlistByUser($userId)
     {
-        $sql = "SELECT * FROM $this->table";
+        $sql = "SELECT w.product_id as wishlist_product_id, p.*, c.name as category_name
+                FROM {$this->table} w
+                JOIN products p ON w.product_id = p.id
+                LEFT JOIN categories c ON p.category_id = c.id
+                WHERE w.user_id = :user_id AND p.deleted_at IS NULL
+                ORDER BY w.created_at DESC";
+        
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute(['user_id' => $userId]);
+        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function create($data = [])
+    /**
+     * Thêm sản phẩm vào wishlist
+     */
+    public function add($userId, $productId)
     {
-        $sql = "INSERT INTO $this->table (product_id, user_id) VALUES (:product_id, :user_id)";
         $conn = $this->connect();
+
+        // Kiểm tra xem đã có trong wishlist chưa
+        $checkSql = "SELECT id FROM {$this->table} WHERE user_id = :user_id AND product_id = :product_id";
+        $stmtCheck = $conn->prepare($checkSql);
+        $stmtCheck->execute([
+            'user_id' => $userId,
+            'product_id' => $productId
+        ]);
+
+        if ($stmtCheck->fetch()) {
+            return false; // Đã tồn tại
+        }
+
+        // Thêm mới
+        $sql = "INSERT INTO {$this->table} (user_id, product_id) VALUES (:user_id, :product_id)";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            'product_id' => $data['product_id'],
-            'user_id' => $data['user_id']
+            'user_id' => $userId,
+            'product_id' => $productId
         ]);
     }
 
-    public function update($id, $data = [])
+    /**
+     * Xóa sản phẩm khỏi wishlist
+     */
+    public function remove($userId, $productId)
     {
-        $now = date('Y-m-d H:i:s');
-
-        $sql = "UPDATE $this->table SET product_id = :product_id, user_id = :user_id, updated_at = :updated_at WHERE id = :id";
+        $sql = "DELETE FROM {$this->table} WHERE user_id = :user_id AND product_id = :product_id";
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
         return $stmt->execute([
-            'product_id' => $data['product_id'],
-            'user_id' => $data['user_id'],
-            'updated_at' => $now,
-            'id' => $id
-        ]);
-    }
-
-    public function delete($id)
-    {
-        $sql = "DELETE FROM $this->table WHERE id = :id";
-        $conn = $this->connect();
-        $stmt = $conn->prepare($sql);
-        return $stmt->execute([
-            'id' => $id
+            'user_id' => $userId,
+            'product_id' => $productId
         ]);
     }
 }
