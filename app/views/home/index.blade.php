@@ -354,7 +354,7 @@
                             <a href="/home/detail/{{ $product['id'] }}" class="action-btn" title="Xem nhanh">
                                 <i class="far fa-eye"></i>
                             </a>
-                            <a href="#" class="action-btn" title="Yêu thích">
+                            <a href="/wishlist/add/{{ $product['id'] }}" class="action-btn" title="Yêu thích">
                                 <i class="far fa-heart"></i>
                             </a>
                         </div>
