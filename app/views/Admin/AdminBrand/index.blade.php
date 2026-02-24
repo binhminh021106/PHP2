@@ -1,16 +1,24 @@
 @extends('layouts.admin')
 
-@section('title', $title)
+@section('title', $title ?? 'Quản lý Thương hiệu')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb & Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-tag me-2"></i>Quản lý Thương hiệu</h4>
-        <a href="/brand/create" class="btn btn-primary">
+        <div>
+            <h1 class="mt-0 mb-2">Quản Lý Thương Hiệu</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none text-muted">Dashboard</a></li>
+                <li class="breadcrumb-item active">Thương hiệu</li>
+            </ol>
+        </div>
+        <a href="/brand/create" class="btn btn-dark shadow-sm px-4" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
             <i class="fa-solid fa-plus me-2"></i>Thêm mới
         </a>
     </div>
 
+    <!-- Thông báo SweetAlert2 -->
     @if(!empty($success_msg))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -27,62 +35,71 @@
     </script>
     @endif
 
-    <div class="card shadow border-0">
-        <div class="card-body">
+    <!-- Bảng dữ liệu -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <i class="fa-solid fa-tags me-1 text-muted"></i> Danh sách thương hiệu
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light text-secondary">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="bg-light" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                         <tr>
-                            <th width="5%" class="text-center">#</th>
-                            <th width="15%">Logo</th>
-                            <th width="25%">Tên Thương Hiệu</th>
-                            <th width="30%">Mô Tả</th>
-                            <th width="15%" class="text-center">Trạng thái</th>
-                            <th width="10%" class="text-center">Hành động</th>
+                            <th width="5%" class="py-3 text-muted">#</th>
+                            <th width="15%" class="py-3 text-muted">Logo</th>
+                            <th width="25%" class="py-3 text-muted text-start">Tên Thương Hiệu</th>
+                            <th width="30%" class="py-3 text-muted text-start">Mô Tả</th>
+                            <th width="15%" class="py-3 text-muted">Trạng thái</th>
+                            <th width="10%" class="py-3 text-muted">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (!empty($brand))
                             @foreach ($brand as $item)
                             <tr>
-                                <td class="text-center fw-bold text-muted">{{ $item['id'] }}</td>
+                                <td class="fw-bold text-muted">{{ $item['id'] }}</td>
                                 
                                 <td>
                                     @if (!empty($item['image']))
-                                        <img src="/storage/uploads/brands/{{ $item['image'] }}" 
-                                             class="rounded border object-fit-cover" 
-                                             width="60" height="60" 
-                                             alt="Logo">
+                                        <div class="d-inline-block p-1 border rounded bg-white">
+                                            <img src="/storage/uploads/brands/{{ $item['image'] }}" 
+                                                 class="object-fit-contain" 
+                                                 style="width: 50px; height: 50px;" 
+                                                 alt="Logo">
+                                        </div>
                                     @else
-                                        <div class="bg-secondary bg-opacity-10 rounded d-flex align-items-center justify-content-center text-muted" style="width: 60px; height: 60px;">
-                                            <i class="fa-regular fa-image"></i>
+                                        <div class="bg-light rounded d-inline-flex align-items-center justify-content-center text-muted" style="width: 58px; height: 58px; border: 1px dashed #ccc;">
+                                            <i class="fa-regular fa-image fs-5"></i>
                                         </div>
                                     @endif
                                 </td>
 
-                                <td>
-                                    <h6 class="mb-0 fw-bold text-dark">{{ $item['name'] }}</h6>
+                                <td class="text-start">
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-family: var(--font-base);">{{ $item['name'] }}</h6>
+                                </td>
+
+                                <td class="text-start">
+                                    <span class="text-muted" style="font-size: 0.9rem;">
+                                        {{ \Illuminate\Support\Str::limit($item['description'], 50) }}
+                                    </span>
                                 </td>
 
                                 <td>
-                                    <span class="text-muted small">{{ \Illuminate\Support\Str::limit($item['description'], 50) }}</span>
-                                </td>
-
-                                <td class="text-center">
                                     @if($item['status'] == 'active')
-                                        <span class="badge rounded-pill bg-success">Hiển thị</span>
+                                        <span class="badge bg-success" style="padding: 6px 12px; font-weight: 500; letter-spacing: 0.5px;">HIỂN THỊ</span>
                                     @else
-                                        <span class="badge rounded-pill bg-secondary">Ẩn</span>
+                                        <span class="badge bg-secondary" style="padding: 6px 12px; font-weight: 500; letter-spacing: 0.5px;">ẨN</span>
                                     @endif
                                 </td>
 
-                                <td class="text-center">
+                                <td>
                                     <div class="d-flex justify-content-center gap-2">
-                                        <a href="/brand/edit/{{ $item['id'] }}" class="btn btn-sm btn-outline-warning" title="Sửa">
+                                        <a href="/brand/edit/{{ $item['id'] }}" class="btn btn-sm btn-outline-dark" title="Sửa" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                         
                                         <button class="btn btn-sm btn-outline-danger" 
+                                                style="width: 32px; height: 32px; padding: 0; line-height: 30px;"
                                                 data-id="{{ $item['id'] }}"
                                                 data-name="{{ $item['name'] }}"
                                                 onclick="confirmDelete(this)" 
@@ -95,9 +112,13 @@
                             @endforeach
                         @else
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">
-                                    <i class="fa-solid fa-box-open fs-2 mb-2 d-block"></i>
-                                    Chưa có thương hiệu nào.
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fa-solid fa-tags fs-1 mb-3 opacity-25"></i>
+                                        <h5 class="fw-normal">Chưa có thương hiệu nào</h5>
+                                        <p class="small mb-3">Hãy thêm thương hiệu mới để hiển thị tại đây.</p>
+                                        <a href="/brand/create" class="btn btn-dark btn-sm px-3">Thêm mới ngay</a>
+                                    </div>
                                 </td>
                             </tr>
                         @endif
@@ -121,13 +142,13 @@
         var name = el.getAttribute('data-name');
 
         Swal.fire({
-            title: 'Bạn chắc chắn chứ?',
-            text: "Xóa thương hiệu '" + name + "' sẽ không thể hoàn tác!",
+            title: 'Xóa thương hiệu?',
+            html: "Bạn có chắc chắn muốn xóa <b>" + name + "</b>?<br>Hành động này không thể hoàn tác!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Vẫn xóa!',
+            confirmButtonColor: '#dc3545', // Màu đỏ nguy hiểm cho nút xoá
+            cancelButtonColor: '#111',     // Màu tối cho nút huỷ
+            confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> Xóa',
             cancelButtonText: 'Hủy'
         }).then((result) => {
             if (result.isConfirmed) {

@@ -1,94 +1,86 @@
 @extends('layouts.admin')
 
-@section('title', $title)
+@section('title', $title ?? 'Thêm Danh Mục Mới')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-0 mb-2">Thêm Danh Mục Mới</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none text-muted">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/category/index" class="text-decoration-none text-muted">Danh mục</a></li>
+                <li class="breadcrumb-item active">Thêm mới</li>
+            </ol>
+        </div>
+        <a href="/category/index" class="btn btn-outline-dark shadow-sm px-4" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+            <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+
     <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card border-0 shadow-lg rounded-3">
-
-                {{-- Header Card --}}
-                <div class="card-header bg-primary text-white py-3 rounded-top-3">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0 fw-bold text-white">
-                            <i class="fa-solid fa-folder-plus me-2"></i>Thêm Danh Mục Mới
-                        </h5>
-                        <a href="/category/index" class="btn btn-outline-light btn-sm border-0 bg-white bg-opacity-25">
-                            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
-                        </a>
-                    </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <i class="fa-solid fa-layer-group me-1 text-muted"></i> Thông tin danh mục
                 </div>
-
-                {{-- Body Card --}}
-                <div class="card-body p-5 bg-white">
+                <div class="card-body p-4">
                     <form method="POST" action="/category/store">
 
-                        {{-- Tên danh mục --}}
+                        <!-- Tên danh mục -->
                         <div class="mb-4">
-                            <label for="name" class="form-label fw-bold text-dark">
-                                Tên danh mục <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-light text-primary"><i class="fa-solid fa-tag"></i></span>
-                                {{-- Thêm class is-invalid nếu có lỗi và hiển thị value cũ --}}
-                                <input type="text" class="form-control bg-light {{ isset($errors['name']) ? 'is-invalid' : '' }}"
-                                    id="name" name="name"
-                                    value="{{ $old['name'] ?? '' }}"
-                                    placeholder="Ví dụ: Laptop, Điện thoại..." style="font-size: 0.95rem;">
-                                @if(isset($errors['name']))
-                                <div class="invalid-feedback">{{ $errors['name'] }}</div>
-                                @endif
-                            </div>
+                            <label for="name" class="form-label fw-bold" style="font-size: 0.95rem;">Tên danh mục <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-0 py-2 {{ isset($errors['name']) ? 'is-invalid' : '' }}"
+                                id="name" name="name"
+                                value="{{ $old['name'] ?? '' }}"
+                                placeholder="Ví dụ: Áo sơ mi, Quần Jean...">
+                            @if(isset($errors['name']))
+                            <div class="invalid-feedback">{{ $errors['name'] }}</div>
+                            @endif
                         </div>
 
-                        {{-- Mô tả --}}
+                        <!-- Trạng thái -->
                         <div class="mb-4">
-                            <label for="description" class="form-label fw-bold text-dark">Mô tả</label>
-                            <textarea class="form-control bg-light" id="description" name="description" rows="5" placeholder="Nhập mô tả chi tiết cho danh mục...">{{ $old['description'] ?? '' }}</textarea>
+                            <label for="status" class="form-label fw-bold" style="font-size: 0.95rem;">Trạng thái</label>
+                            <select class="form-select rounded-0 py-2" id="status" name="status">
+                                <option value="active" {{ (isset($old['status']) && $old['status'] == 'active') ? 'selected' : '' }}>Hiển thị</option>
+                                <option value="inactive" {{ (isset($old['status']) && $old['status'] == 'inactive') ? 'selected' : '' }}>Ẩn</option>
+                            </select>
                         </div>
 
-                        {{-- Icon --}}
+                        <!-- Icon -->
                         <div class="mb-4">
-                            <label for="icon" class="form-label fw-bold text-dark">Icon hiển thị <span class="text-danger">*</span></label>
+                            <label for="icon" class="form-label fw-bold" style="font-size: 0.95rem;">Icon hiển thị <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light text-primary"><i class="fa-solid fa-icons"></i></span>
-                                <input type="text" class="form-control bg-light {{ isset($errors['icon']) ? 'is-invalid' : '' }}"
+                                <span class="input-group-text bg-light rounded-0 border-end-0 text-muted"><i class="fa-solid fa-icons"></i></span>
+                                <input type="text" class="form-control rounded-0 border-start-0 py-2 {{ isset($errors['icon']) ? 'is-invalid' : '' }}"
                                     id="icon" name="icon"
                                     value="{{ $old['icon'] ?? '' }}"
-                                    placeholder="Ví dụ: fa-solid fa-laptop">
-                                <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" class="btn btn-outline-secondary" title="Tìm kiếm icon">
-                                    <i class="fa-solid fa-magnifying-glass"></i> Tra icon
+                                    placeholder="Ví dụ: fa-solid fa-shirt">
+                                <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" class="btn btn-outline-dark rounded-0 px-3 d-flex align-items-center" title="Tìm kiếm icon">
+                                    <i class="fa-solid fa-magnifying-glass me-2 d-none d-sm-inline"></i> Tra icon
                                 </a>
                                 @if(isset($errors['icon']))
                                 <div class="invalid-feedback">{{ $errors['icon'] }}</div>
                                 @endif
                             </div>
-                            <div class="form-text text-muted ps-1">
+                            <div class="form-text text-muted mt-2">
                                 <small><i class="fa-solid fa-circle-info me-1"></i>Sử dụng class icon từ thư viện <strong>FontAwesome 6</strong>.</small>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="status" class="form-label fw-bold text-secondary">
-                                <i class="fa-solid fa-toggle-on me-1"></i>Trạng thái
-                            </label>
-                            <select class="form-select" name="status" id="status">
-                                <option value="active" selected>Hoạt động</option>
-                                <option value="inactive">Ngừng hoạt động</option>
-                            </select>
-                            <div class="form-text text-muted small">Lựa chọn trạng thái hiển thị của danh mục.</div>
+                        <!-- Mô tả -->
+                        <div class="mb-5">
+                            <label for="description" class="form-label fw-bold" style="font-size: 0.95rem;">Mô Tả</label>
+                            <textarea class="form-control rounded-0" id="description" name="description" rows="4" placeholder="Nhập mô tả danh mục...">{{ $old['description'] ?? '' }}</textarea>
                         </div>
 
-                        <hr class="my-4 opacity-25">
-
-                        {{-- Buttons --}}
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="/category/index" class="btn btn-light btn-lg px-4 fs-6 border">
-                                <i class="fa-solid fa-xmark me-2"></i>Hủy bỏ
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg px-4 fs-6 fw-bold shadow-sm">
-                                <i class="fa-solid fa-save me-2"></i>Lưu Danh Mục
+                        <!-- Nút Thao tác -->
+                        <div class="d-flex justify-content-end gap-3 border-top pt-4">
+                            <a href="/category/index" class="btn btn-outline-dark px-4 py-2" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-dark px-4 py-2" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                                <i class="fa-solid fa-save me-2"></i>Lưu danh mục
                             </button>
                         </div>
 
