@@ -9,7 +9,6 @@ class OrderModel extends Model
     {
         $conn = $this->connect();
         try {
-            // Bắt đầu transaction để đảm bảo an toàn dữ liệu (Nếu lỗi sẽ rollback lại toàn bộ)
             $conn->beginTransaction();
 
             // 1. Thêm thông tin vào bảng orders
@@ -35,15 +34,14 @@ class OrderModel extends Model
             $sqlItem = "INSERT INTO order_items (order_id, product_id, product_variant_id, price, quantity) VALUES (:order_id, :product_id, :variant_id, :price, :quantity)";
             $stmtItem = $conn->prepare($sqlItem);
 
-            $sqlStock = "UPDATE product_variants SET stock = stock - :qty WHERE id = :variant_id AND stock >= :qty";
+            $sqlStock = "UPDATE product_variants SET quantity = quantity - :qty WHERE id = :variant_id AND quantity >= :qty";
             $stmtStock = $conn->prepare($sqlStock);
 
             foreach ($cartItems as $item) {
-                // Lưu chi tiết đơn
                 $stmtItem->execute([
                     'order_id' => $orderId,
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['product_variant_id'] ?? 0, // Nếu không có variant thì để 0
+                    'product_id' => $item['product_id'] ?? $item['id'],
+                    'variant_id' => $item['product_variant_id'] ?? 0,
                     'price' => $item['price'],
                     'quantity' => $item['quantity']
                 ]);
@@ -56,12 +54,13 @@ class OrderModel extends Model
                     ]);
                 }
             }
- 
-            // 3. Xóa các sản phẩm trong giỏ hàng sau khi đặt thành công
-            $stmtClearCart = $conn->prepare("DELETE FROM cart_items WHERE cart_id = :cart_id");
-            $stmtClearCart->execute(['cart_id' => $cartId]);
 
-            // Hoàn tất transaction
+            // 3. Xóa các sản phẩm trong giỏ hàng sau khi đặt thành công
+            if ($cartId) {
+                $stmtClearCart = $conn->prepare("DELETE FROM cart_items WHERE cart_id = :cart_id");
+                $stmtClearCart->execute(['cart_id' => $cartId]);
+            }
+
             $conn->commit();
             return $orderId;
 
@@ -69,5 +68,123 @@ class OrderModel extends Model
             $conn->rollBack();
             return false;
         }
+    }
+
+    /**
+     * Lấy toàn bộ danh sách đơn hàng của 1 user (Lịch sử)
+     */
+    public function getOrdersByUser($userId)
+    {
+        $sql = "SELECT * FROM orders WHERE user_id = :user_id ORDER BY created_at DESC";
+        $stmt = $this->connect()->prepare($sql);
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Lấy thông tin chung của 1 đơn hàng cụ thể (Có kiểm tra bảo mật user_id)
+     */
+    public function getOrderById($orderId, $userId)
+    {
+        $sql = "SELECT * FROM orders WHERE id = :id AND user_id = :user_id";
+        $stmt = $this->connect()->prepare($sql);
+        $stmt->execute(['id' => $orderId, 'user_id' => $userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Lấy danh sách sản phẩm bên trong 1 đơn hàng
+     */
+    public function getOrderItems($orderId)
+    {
+        // Join với bảng products và product_variants để lấy tên và hình ảnh
+        $sql = "SELECT oi.*, p.name as product_name, COALESCE(pv.image, p.img_thumbnail) as image, pv.attributes 
+                FROM order_items oi 
+                JOIN products p ON oi.product_id = p.id 
+                LEFT JOIN product_variants pv ON oi.product_variant_id = pv.id 
+                WHERE oi.order_id = :order_id";
+        $stmt = $this->connect()->prepare($sql);
+        $stmt->execute(['order_id' => $orderId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Hủy đơn hàng (Chỉ được hủy khi trạng thái là pending)
+     */
+    public function cancelOrder($orderId, $userId)
+    {
+        $conn = $this->connect();
+        try {
+            $conn->beginTransaction();
+
+            // 1. Cập nhật trạng thái thành 'cancelled'
+            $sql = "UPDATE orders SET status = 'cancelled' WHERE id = :id AND user_id = :user_id AND status = 'pending'";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute(['id' => $orderId, 'user_id' => $userId]);
+
+            if ($stmt->rowCount() > 0) {
+                // 2. Hoàn lại số lượng tồn kho
+                $items = $this->getOrderItems($orderId);
+                $sqlRestore = "UPDATE product_variants SET quantity = quantity + :qty WHERE id = :variant_id";
+                $stmtRestore = $conn->prepare($sqlRestore);
+                
+                foreach ($items as $item) {
+                    if ($item['product_variant_id'] > 0) {
+                        $stmtRestore->execute([
+                            'qty' => $item['quantity'],
+                            'variant_id' => $item['product_variant_id']
+                        ]);
+                    }
+                }
+                
+                $conn->commit();
+                return true;
+            }
+
+            $conn->rollBack();
+            return false;
+        } catch (Exception $e) {
+            $conn->rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * =========================================
+     * CÁC HÀM DÀNH CHO QUẢN TRỊ VIÊN (ADMIN)
+     * =========================================
+     */
+
+    /**
+     * Lấy toàn bộ đơn hàng của tất cả khách hàng
+     */
+    public function getAllOrders()
+    {
+        $sql = "SELECT * FROM orders ORDER BY created_at DESC";
+        return $this->connect()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Lấy chi tiết đơn hàng cho Admin (Không cần check user_id)
+     */
+    public function getOrderByIdAdmin($orderId)
+    {
+        $sql = "SELECT * FROM orders WHERE id = :id";
+        $stmt = $this->connect()->prepare($sql);
+        $stmt->execute(['id' => $orderId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Cập nhật trạng thái đơn hàng (Dành cho Admin)
+     */
+    public function updateOrderStatus($orderId, $status)
+    {
+        $sql = "UPDATE orders SET status = :status WHERE id = :id";
+        $stmt = $this->connect()->prepare($sql);
+        return $stmt->execute([
+            'status' => $status,
+            'id' => $orderId
+        ]);
     }
 }

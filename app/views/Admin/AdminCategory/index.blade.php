@@ -1,13 +1,19 @@
 @extends('layouts.admin')
 
-@section('title', $title)
+@section('title', $title ?? 'Quản lý Danh mục')
 
 @section('content')
-<div class="container-fluid py-4">
-    <!-- Header & Nút Thêm -->
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb & Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0 fw-bold text-primary"><i class="fa-solid fa-layer-group me-2"></i>Quản lý Danh mục</h4>
-        <a href="/category/create" class="btn btn-primary">
+        <div>
+            <h1 class="mt-0 mb-2">Quản Lý Danh Mục</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none text-muted">Dashboard</a></li>
+                <li class="breadcrumb-item active">Danh mục</li>
+            </ol>
+        </div>
+        <a href="/category/create" class="btn btn-dark shadow-sm px-4" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
             <i class="fa-solid fa-plus me-2"></i>Thêm mới
         </a>
     </div>
@@ -30,75 +36,82 @@
     @endif
 
     <!-- Bảng dữ liệu -->
-    <div class="card shadow border-0">
-        <div class="card-body">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <i class="fa-solid fa-layer-group me-1 text-muted"></i> Danh sách danh mục
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light text-secondary">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="bg-light" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                         <tr>
-                            <th width="5%" class="text-center">#</th>
-                            <th width="25%">Tên danh mục</th>
-                            <th width="40%">Mô tả</th>
-                            <th width="15%" class="text-center">Trạng thái</th>
-                            <th width="15%" class="text-center">Hành động</th>
+                            <th width="5%" class="py-3 text-muted">#</th>
+                            <th width="25%" class="py-3 text-muted text-start">Tên danh mục</th>
+                            <th width="40%" class="py-3 text-muted text-start">Mô tả</th>
+                            <th width="15%" class="py-3 text-muted">Trạng thái</th>
+                            <th width="15%" class="py-3 text-muted">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Sửa biến loop từ $category thành $item -->
                         @if(!empty($category))
-                        @foreach($category as $item)
-                        <tr>
-                            <td class="text-center fw-bold text-muted">{{ $item['id'] }}</td>
-                            
-                            <!-- Tên danh mục -->
-                            <td>
-                                <h6 class="mb-0 fw-bold text-dark">{{ $item['name'] }}</h6>
-                                @if(!empty($item['slug']))
-                                <small class="text-muted" style="font-size: 0.8rem;">/{{ $item['slug'] }}</small>
-                                @endif
-                            </td>
+                            @foreach($category as $item)
+                            <tr>
+                                <td class="fw-bold text-muted">{{ $item['id'] }}</td>
+                                
+                                <!-- Tên danh mục -->
+                                <td class="text-start">
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-family: var(--font-base);">{{ $item['name'] }}</h6>
+                                    @if(!empty($item['slug']))
+                                        <small class="text-muted" style="font-size: 0.8rem;">/{{ $item['slug'] }}</small>
+                                    @endif
+                                </td>
 
-                            <!-- Mô tả -->
-                            <td>
-                                <span class="text-muted small text-truncate d-inline-block" style="max-width: 300px;">
-                                    {{ $item['description'] ?? 'Không có mô tả' }}
-                                </span>
-                            </td>
+                                <!-- Mô tả -->
+                                <td class="text-start">
+                                    <span class="text-muted small text-truncate d-inline-block" style="max-width: 300px; font-size: 0.9rem;">
+                                        {{ $item['description'] ?? 'Không có mô tả' }}
+                                    </span>
+                                </td>
 
-                            <!-- Trạng thái -->
-                            <td class="text-center">
-                                @if($item['status'] == 'active')
-                                <span class="badge rounded-pill bg-success">Hiển thị</span>
-                                @else
-                                <span class="badge rounded-pill bg-secondary">Ẩn</span>
-                                @endif
-                            </td>
+                                <!-- Trạng thái -->
+                                <td>
+                                    @if($item['status'] == 'active')
+                                        <span class="badge bg-success" style="padding: 6px 12px; font-weight: 500; letter-spacing: 0.5px;">HIỂN THỊ</span>
+                                    @else
+                                        <span class="badge bg-secondary" style="padding: 6px 12px; font-weight: 500; letter-spacing: 0.5px;">ẨN</span>
+                                    @endif
+                                </td>
 
-                            <!-- Hành động -->
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <a href="/category/edit/{{ $item['id'] }}" class="btn btn-sm btn-outline-warning" title="Sửa">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
+                                <!-- Hành động -->
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="/category/edit/{{ $item['id'] }}" class="btn btn-sm btn-outline-dark" title="Sửa" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
 
-                                    <button class="btn btn-sm btn-outline-danger"
-                                        data-id="{{ $item['id'] }}"
-                                        data-name="{{ $item['name'] }}"
-                                        onclick="confirmDelete(this)"
-                                        title="Xóa">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            style="width: 32px; height: 32px; padding: 0; line-height: 30px;"
+                                            data-id="{{ $item['id'] }}"
+                                            data-name="{{ $item['name'] }}"
+                                            onclick="confirmDelete(this)"
+                                            title="Xóa">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
                         @else
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
-                                <i class="fa-solid fa-layer-group fs-2 mb-2 d-block"></i>
-                                Chưa có danh mục nào.
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fa-solid fa-layer-group fs-1 mb-3 opacity-25"></i>
+                                        <h5 class="fw-normal">Chưa có danh mục nào</h5>
+                                        <p class="small mb-3">Hãy thêm danh mục mới để phân loại sản phẩm.</p>
+                                        <a href="/category/create" class="btn btn-dark btn-sm px-3">Thêm mới ngay</a>
+                                    </div>
+                                </td>
+                            </tr>
                         @endif
                     </tbody>
                 </table>
@@ -121,13 +134,13 @@
         var name = el.getAttribute('data-name');
 
         Swal.fire({
-            title: 'Bạn chắc chắn chứ?',
-            text: "Xóa danh mục '" + name + "' sẽ không thể hoàn tác (bao gồm cả các sản phẩm thuộc danh mục này nếu có ràng buộc)!",
+            title: 'Xóa danh mục?',
+            html: "Bạn có chắc chắn muốn xóa <b>" + name + "</b>?<br>Hành động này không thể hoàn tác (bao gồm cả các sản phẩm thuộc danh mục này nếu có ràng buộc)!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Vẫn xóa!',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#111',
+            confirmButtonText: '<i class="fa-solid fa-trash me-1"></i> Xóa',
             cancelButtonText: 'Hủy'
         }).then((result) => {
             if (result.isConfirmed) {
