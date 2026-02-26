@@ -16,7 +16,15 @@ class ProductController extends \Controller
 
     public function index()
     {
-        $products = $this->productModel->getAll();
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 5; // Số lượng sản phẩm trên 1 trang (bạn có thể đổi thành 10)
+        $offset = ($page - 1) * $limit;
+
+        $products = $this->productModel->getAll($search, $limit, $offset);
+        $totalRecords = $this->productModel->getTotalProductsAdmin($search);
+        $totalPages = ceil($totalRecords / $limit);
 
         $successMsg = '';
         if (isset($_SESSION['success'])) {
@@ -27,7 +35,11 @@ class ProductController extends \Controller
         $this->view('Admin/AdminProduct/index', [
             'products' => $products,
             'title' => 'Quản lý sản phẩm',
-            'success_msg' => $successMsg
+            'success_msg' => $successMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 

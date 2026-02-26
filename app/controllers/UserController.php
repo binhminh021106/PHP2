@@ -10,7 +10,16 @@ class UserController extends \Controller
     public function index()
     {
         $userModel = $this->model('UserModel');
-        $users = $userModel->index();
+        
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 5; // Số lượng thành viên trên 1 trang
+        $offset = ($page - 1) * $limit;
+
+        $users = $userModel->index($search, $limit, $offset);
+        $totalRecords = $userModel->getTotalUsers($search);
+        $totalPages = ceil($totalRecords / $limit);
 
         $successMsg = '';
         if (isset($_SESSION['success'])) {
@@ -21,7 +30,11 @@ class UserController extends \Controller
         $this->view('Admin/AdminUser/index', [
             'user' => $users,
             'title' => "Quản lý thành viên",
-            'success_msg' => $successMsg
+            'success_msg' => $successMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 

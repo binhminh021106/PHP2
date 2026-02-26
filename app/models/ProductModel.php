@@ -2,19 +2,58 @@
 
 class ProductModel extends Model
 {
-    // Lấy danh sách sản phẩm kèm danh mục và thương hiệu
-    public function getAll()
+    // Lấy danh sách sản phẩm kèm danh mục và thương hiệu (Có tìm kiếm và phân trang)
+    public function getAll($search = '', $limit = 5, $offset = 0)
     {
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name 
                 FROM products p 
                 LEFT JOIN categories c ON p.category_id = c.id 
                 LEFT JOIN brands b ON p.brand_id = b.id
-                WHERE p.deleted_at IS NULL 
-                ORDER BY p.id DESC";
+                WHERE p.deleted_at IS NULL";
+        
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND p.name LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= " ORDER BY p.id DESC LIMIT :limit OFFSET :offset";
+        
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Đếm tổng số sản phẩm (dùng cho tính toán phân trang)
+    public function getTotalProductsAdmin($search = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM products WHERE deleted_at IS NULL";
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND name LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'] ?? 0;
     }
 
     public function getById($id)

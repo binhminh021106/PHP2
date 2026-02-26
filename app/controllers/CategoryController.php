@@ -10,9 +10,19 @@ class CategoryController extends \Controller
     
     public function index()
     {
-        $category = $this->model('CategoryModel');
-        $data = $category->index();
-        $title = "Quản lí danh mục";
+        $categoryModel = $this->model('CategoryModel');
+        
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 5; // Số lượng danh mục trên 1 trang
+        $offset = ($page - 1) * $limit;
+
+        $data = $categoryModel->index($search, $limit, $offset);
+        $totalRecords = $categoryModel->getTotalCategories($search);
+        $totalPages = ceil($totalRecords / $limit);
+        
+        $title = "Quản lý danh mục";
 
         $successMsg = '';
         if (isset($_SESSION['success'])) {
@@ -23,7 +33,11 @@ class CategoryController extends \Controller
         $this->view('Admin/AdminCategory/index', [
             'category' => $data,
             'title' => $title,
-            'success_msg' => $successMsg
+            'success_msg' => $successMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 
@@ -51,8 +65,12 @@ class CategoryController extends \Controller
             $status = $_POST['status'];
 
             $errors = [];
+            $categoryModel = $this->model('CategoryModel');
+
             if (empty($name)) {
                 $errors['name'] = "Vui lòng nhập tên danh mục.";
+            } else if ($categoryModel->checkNameExists($name)) {
+                $errors['name'] = 'Tên danh mục đã tồn tại.';
             }
 
             if (empty($icon)) {
@@ -73,7 +91,7 @@ class CategoryController extends \Controller
                 'status' => $status
             ];
 
-            if ($this->model('CategoryModel')->create($data)) {
+            if ($categoryModel->create($data)) {
                 $_SESSION['success'] = 'Thêm danh mục mới thành công!';
                 header('Location: /category/index');
             } else {
@@ -113,11 +131,16 @@ class CategoryController extends \Controller
             $icon = trim($_POST['icon']);
             $status = $_POST['status'];
 
-            // --- VALIDATE ---
+            $categoryModel = $this->model('CategoryModel');
             $errors = [];
+
+            // --- VALIDATE ---
             if (empty($name)) {
                 $errors['name'] = "Vui lòng nhập tên danh mục.";
+            } else if ($categoryModel->checkNameExists($name, $id)) {
+                $errors['name'] = 'Tên danh mục đã tồn tại.';
             }
+
             if (empty($icon)) {
                 $errors['icon'] = "Vui lòng nhập class icon.";
             }
@@ -135,7 +158,7 @@ class CategoryController extends \Controller
                 'status' => $status,
             ];
 
-            if ($this->model('CategoryModel')->update($id, $data)) {
+            if ($categoryModel->update($id, $data)) {
                 $_SESSION['success'] = 'Cập nhật danh mục thành công!';
                 header('Location: /category/index');
             } else {
