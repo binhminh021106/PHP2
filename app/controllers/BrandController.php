@@ -9,8 +9,17 @@ class BrandController extends \Controller
 
     public function index()
     {
-        $brand = $this->model('BrandModel');
-        $data = $brand->index();
+        $brandModel = $this->model('BrandModel');
+        
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 5; // Số lượng thương hiệu trên 1 trang
+        $offset = ($page - 1) * $limit;
+
+        $data = $brandModel->index($search, $limit, $offset);
+        $totalRecords = $brandModel->getTotalBrands($search);
+        $totalPages = ceil($totalRecords / $limit);
 
         $successMsg = '';
         if (isset($_SESSION['success'])) {
@@ -21,7 +30,11 @@ class BrandController extends \Controller
         $this->view('Admin/AdminBrand/index', [
             'brand' => $data,
             'title' => "Quản lý Thương hiệu",
-            'success_msg' => $successMsg
+            'success_msg' => $successMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 
@@ -48,18 +61,12 @@ class BrandController extends \Controller
             $status = isset($_POST['status']) ? $_POST['status'] : 'active';
 
             $errors = [];
+            $brandModel = $this->model('BrandModel');
 
             if (empty($name)) {
                 $errors['name'] = 'Tên thương hiệu không được để trống';
-            }
-
-            $brandModel = $this->model('BrandModel');
-            $allBrands = $brandModel->index();
-            foreach ($allBrands as $b) {
-                if (strcasecmp($b['name'], $name) == 0) {
-                    $errors['name'] = 'Tên thương hiệu đã tồn tại';
-                    break;
-                }
+            } else if ($brandModel->checkNameExists($name)) {
+                $errors['name'] = 'Tên thương hiệu đã tồn tại';
             }
 
             if (!empty($errors)) {
@@ -136,17 +143,12 @@ class BrandController extends \Controller
             $status = isset($_POST['status']) ? $_POST['status'] : 'active';
 
             $errors = [];
+            $brandModel = $this->model('BrandModel');
+
             if (empty($name)) {
                 $errors['name'] = 'Tên thương hiệu không được để trống';
-            }
-
-            $brandModel = $this->model('BrandModel');
-            $allBrands = $brandModel->index();
-            foreach ($allBrands as $b) {
-                if (strcasecmp($b['name'], $name) == 0 && $b['id'] != $id) {
-                    $errors['name'] = 'Tên thương hiệu đã tồn tại';
-                    break;
-                }
+            } else if ($brandModel->checkNameExists($name, $id)) {
+                $errors['name'] = 'Tên thương hiệu đã tồn tại';
             }
 
             if (!empty($errors)) {

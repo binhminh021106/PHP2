@@ -4,13 +4,71 @@ class CouponModel extends Model
 {
     private $table = 'coupons';
 
-    public function index()
+    // Đã cập nhật để hỗ trợ Tìm kiếm và Phân trang
+    public function index($search = '', $limit = 5, $offset = 0)
     {
-        $sql = "SELECT * FROM $this->table WHERE deleted_at IS NULL ORDER BY id DESC";
+        $sql = "SELECT * FROM $this->table WHERE deleted_at IS NULL";
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND code LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Đếm tổng số bản ghi
+    public function getTotalCoupons($search = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM $this->table WHERE deleted_at IS NULL";
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND code LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'] ?? 0;
+    }
+
+    // Hàm kiểm tra trùng lặp mã Code
+    public function checkCodeExists($code, $ignoreId = null)
+    {
+        $sql = "SELECT id FROM $this->table WHERE code = :code AND deleted_at IS NULL";
+        $params = ['code' => $code];
+
+        if ($ignoreId) {
+            $sql .= " AND id != :ignore_id";
+            $params['ignore_id'] = $ignoreId;
+        }
+
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetch() ? true : false;
     }
 
     public function create($data = [])

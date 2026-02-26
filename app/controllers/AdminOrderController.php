@@ -6,7 +6,8 @@ class AdminOrderController extends Controller
 
     public function __construct()
     {
-        $this->orderModel = new OrderModel(); // Hoặc $this->model('OrderModel')
+        // Đã sửa cách khởi tạo Model cho đúng với chuẩn của dự án bạn
+        $this->orderModel = new OrderModel(); 
         
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -26,7 +27,18 @@ class AdminOrderController extends Controller
      */
     public function index()
     {
-        $orders = $this->orderModel->getAllOrders();
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 10; // Số lượng đơn hàng trên 1 trang
+        $offset = ($page - 1) * $limit;
+
+        // Lấy danh sách có phân trang
+        $orders = $this->orderModel->getAllOrders($search, $limit, $offset);
+        
+        // Tính toán phân trang
+        $totalRecords = $this->orderModel->getTotalAdminOrders($search);
+        $totalPages = ceil($totalRecords / $limit);
 
         $successMsg = $_SESSION['success'] ?? '';
         $errorMsg = $_SESSION['error'] ?? '';
@@ -36,7 +48,11 @@ class AdminOrderController extends Controller
             'title' => 'Quản lý đơn hàng',
             'orders' => $orders,
             'successMsg' => $successMsg,
-            'errorMsg' => $errorMsg
+            'errorMsg' => $errorMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 

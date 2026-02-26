@@ -38,19 +38,23 @@ class OrderModel extends Model
             $stmtStock = $conn->prepare($sqlStock);
 
             foreach ($cartItems as $item) {
+                // Sửa lỗi: Check cả 2 trường hợp tên key từ Cart (variant_id) hoặc bảng khác (product_variant_id)
+                $vId = $item['variant_id'] ?? $item['product_variant_id'] ?? 0;
+                $pId = $item['product_id'] ?? $item['id'];
+
                 $stmtItem->execute([
                     'order_id' => $orderId,
-                    'product_id' => $item['product_id'] ?? $item['id'],
-                    'variant_id' => $item['product_variant_id'] ?? 0,
+                    'product_id' => $pId,
+                    'variant_id' => $vId,
                     'price' => $item['price'],
                     'quantity' => $item['quantity']
                 ]);
 
-                // Trừ tồn kho (nếu có dùng biến thể)
-                if (isset($item['product_variant_id']) && $item['product_variant_id'] > 0) {
+                // Trừ tồn kho (nếu có ID biến thể hợp lệ)
+                if ($vId > 0) {
                     $stmtStock->execute([
                         'qty' => $item['quantity'],
-                        'variant_id' => $item['product_variant_id']
+                        'variant_id' => $vId
                     ]);
                 }
             }
@@ -156,12 +160,57 @@ class OrderModel extends Model
      */
 
     /**
-     * Lấy toàn bộ đơn hàng của tất cả khách hàng
+     * Lấy toàn bộ đơn hàng của tất cả khách hàng (Có Phân trang & Tìm kiếm)
      */
-    public function getAllOrders()
+    public function getAllOrders($search = '', $limit = 10, $offset = 0)
     {
-        $sql = "SELECT * FROM orders ORDER BY created_at DESC";
-        return $this->connect()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT * FROM orders";
+        $params = [];
+
+        if (!empty($search)) {
+            // Tìm kiếm theo ID đơn hàng, tên khách, số điện thoại hoặc email
+            $sql .= " WHERE id LIKE :search OR fullname LIKE :search OR phone LIKE :search OR email LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= " ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+        
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Đếm tổng số đơn hàng (Dành cho tính toán phân trang)
+     */
+    public function getTotalAdminOrders($search = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM orders";
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " WHERE id LIKE :search OR fullname LIKE :search OR phone LIKE :search OR email LIKE :search";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'] ?? 0;
     }
 
     /**

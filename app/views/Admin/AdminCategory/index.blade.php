@@ -3,9 +3,39 @@
 @section('title', $title ?? 'Quản lý Danh mục')
 
 @section('content')
+
+<style>
+    /* Tuỳ chỉnh giao diện Phân trang (Pagination) */
+    .custom-pagination .page-link {
+        color: var(--color-dark, #111);
+        border: 1px solid #eee;
+        margin: 0 4px;
+        border-radius: 0 !important;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    .custom-pagination .page-item.active .page-link {
+        background-color: var(--color-dark, #111);
+        border-color: var(--color-dark, #111);
+        color: white;
+    }
+    .custom-pagination .page-link:hover {
+        background-color: var(--color-accent, #c9a47c);
+        border-color: var(--color-accent, #c9a47c);
+        color: white;
+    }
+    .custom-pagination .page-item.disabled .page-link {
+        color: #bbb;
+        background-color: #fafafa;
+        border-color: #eee;
+    }
+</style>
+
 <div class="container-fluid px-4 py-4">
     <!-- Breadcrumb & Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
         <div>
             <h1 class="mt-0 mb-2">Quản Lý Danh Mục</h1>
             <ol class="breadcrumb mb-0">
@@ -13,9 +43,32 @@
                 <li class="breadcrumb-item active">Danh mục</li>
             </ol>
         </div>
-        <a href="/category/create" class="btn btn-dark shadow-sm px-4" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
-            <i class="fa-solid fa-plus me-2"></i>Thêm mới
-        </a>
+        
+        <div class="d-flex gap-2 align-items-center">
+            <!-- Search Form -->
+            <form action="" method="GET" class="d-flex gap-2">
+                <div class="input-group shadow-sm">
+                    <input type="text" name="search" class="form-control rounded-0 border-dark" placeholder="Tìm tên danh mục..." value="{{ $search ?? '' }}">
+                    <button class="btn btn-dark rounded-0 px-3" type="submit" title="Tìm kiếm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                @if(!empty($search))
+                    <a href="/category/index" class="btn btn-outline-dark rounded-0 d-flex align-items-center" title="Xóa bộ lọc">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </a>
+                @endif
+            </form>
+
+            <a href="/category/create" class="btn btn-dark shadow-sm px-4 rounded-0 d-flex align-items-center" style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; height: 38px;">
+                <i class="fa-solid fa-plus me-2"></i>Thêm mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Hiển thị thông báo tìm kiếm -->
+    <div class="mb-3 text-muted small" style="letter-spacing: 0.5px;">
+        <span>Tìm thấy <b class="text-dark">{{ $total_records ?? 0 }}</b> danh mục @if(!empty($search)) với từ khóa "<b class="text-dark">{{ $search }}</b>" @endif</span>
     </div>
 
     <!-- SweetAlert Success Notification -->
@@ -60,7 +113,9 @@
                                 
                                 <!-- Tên danh mục -->
                                 <td class="text-start">
-                                    <h6 class="mb-0 fw-bold text-dark" style="font-family: var(--font-base);">{{ $item['name'] }}</h6>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-family: var(--font-base);">
+                                        <i class="{{ $item['icon'] }} me-2 text-muted"></i>{{ $item['name'] }}
+                                    </h6>
                                     @if(!empty($item['slug']))
                                         <small class="text-muted" style="font-size: 0.8rem;">/{{ $item['slug'] }}</small>
                                     @endif
@@ -116,6 +171,37 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination (Phân trang) -->
+            @if(isset($total_pages) && $total_pages > 1)
+            <div class="d-flex justify-content-center border-top py-4 bg-white">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination custom-pagination mb-0">
+                        <!-- Nút Previous -->
+                        <li class="page-item {{ $current_page <= 1 ? 'disabled' : '' }}">
+                            <a class="page-link" href="?page={{ $current_page - 1 }}&search={{ $search }}" aria-label="Previous">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </a>
+                        </li>
+
+                        <!-- Các số trang -->
+                        @for($i = 1; $i <= $total_pages; $i++)
+                        <li class="page-item {{ $current_page == $i ? 'active' : '' }}">
+                            <a class="page-link" href="?page={{ $i }}&search={{ $search }}">{{ $i }}</a>
+                        </li>
+                        @endfor
+
+                        <!-- Nút Next -->
+                        <li class="page-item {{ $current_page >= $total_pages ? 'disabled' : '' }}">
+                            <a class="page-link" href="?page={{ $current_page + 1 }}&search={{ $search }}" aria-label="Next">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            @endif
+
         </div>
     </div>
 </div>

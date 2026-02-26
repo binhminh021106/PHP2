@@ -10,7 +10,17 @@ class CouponController extends \Controller
     public function index()
     {
         $couponModel = $this->model('CouponModel');
-        $data = $couponModel->index();
+        
+        // Xử lý Tìm kiếm và Phân trang
+        $search = $_GET['search'] ?? '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 5; // Số lượng mã giảm giá trên 1 trang
+        $offset = ($page - 1) * $limit;
+
+        $data = $couponModel->index($search, $limit, $offset);
+        $totalRecords = $couponModel->getTotalCoupons($search);
+        $totalPages = ceil($totalRecords / $limit);
+
         $title = "Quản lý mã giảm giá";
 
         $successMsg = '';
@@ -22,7 +32,11 @@ class CouponController extends \Controller
         $this->view('Admin/AdminCoupon/index', [
             'coupons' => $data,
             'title' => $title,
-            'success_msg' => $successMsg
+            'success_msg' => $successMsg,
+            'search' => $search,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords
         ]);
     }
 
@@ -43,19 +57,22 @@ class CouponController extends \Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            // Lấy dữ liệu
-            $code = strtoupper(trim($_POST['code'])); // Viết hoa mã
+            $code = strtoupper(trim($_POST['code']));
             $type = $_POST['type'];
             $value = trim($_POST['value']);
             $quantity = trim($_POST['quantity']);
             $expired_at = $_POST['expired_at'];
             $status = $_POST['status'];
 
-            // Validate
+            $couponModel = $this->model('CouponModel');
             $errors = [];
+
             if (empty($code)) {
                 $errors['code'] = "Vui lòng nhập mã giảm giá.";
+            } else if ($couponModel->checkCodeExists($code)) {
+                $errors['code'] = "Mã code này đã tồn tại.";
             }
+
             if (empty($value) || !is_numeric($value) || $value < 0) {
                 $errors['value'] = "Giá trị giảm phải là số dương.";
             }
@@ -82,7 +99,7 @@ class CouponController extends \Controller
                 'expired_at' => $expired_at
             ];
 
-            if ($this->model('CouponModel')->create($data)) {
+            if ($couponModel->create($data)) {
                 $_SESSION['success'] = 'Thêm mã giảm giá thành công!';
                 header('Location: /coupon/index');
             } else {
@@ -124,11 +141,24 @@ class CouponController extends \Controller
             $expired_at = $_POST['expired_at'];
             $status = $_POST['status'];
 
+            $couponModel = $this->model('CouponModel');
             $errors = [];
-            if (empty($code)) $errors['code'] = "Vui lòng nhập mã giảm giá.";
-            if (empty($value) || !is_numeric($value)) $errors['value'] = "Giá trị không hợp lệ.";
-            if (empty($quantity) || !is_numeric($quantity)) $errors['quantity'] = "Số lượng không hợp lệ.";
-            if (empty($expired_at)) $errors['expired_at'] = "Vui lòng chọn ngày hết hạn.";
+
+            if (empty($code)) {
+                $errors['code'] = "Vui lòng nhập mã giảm giá.";
+            } else if ($couponModel->checkCodeExists($code, $id)) {
+                $errors['code'] = "Mã code này đã tồn tại.";
+            }
+
+            if (empty($value) || !is_numeric($value) || $value < 0) {
+                $errors['value'] = "Giá trị không hợp lệ.";
+            }
+            if (empty($quantity) || !is_numeric($quantity) || $quantity < 0) {
+                $errors['quantity'] = "Số lượng không hợp lệ.";
+            }
+            if (empty($expired_at)) {
+                $errors['expired_at'] = "Vui lòng chọn ngày hết hạn.";
+            }
 
             if (!empty($errors)) {
                 $_SESSION['errors'] = $errors;
@@ -145,7 +175,7 @@ class CouponController extends \Controller
                 'expired_at' => $expired_at
             ];
 
-            if ($this->model('CouponModel')->update($id, $data)) {
+            if ($couponModel->update($id, $data)) {
                 $_SESSION['success'] = 'Cập nhật mã giảm giá thành công!';
                 header('Location: /coupon/index');
             } else {

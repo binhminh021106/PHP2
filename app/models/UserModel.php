@@ -4,13 +4,54 @@ class UserModel extends Model
 {
     private $table = 'users';
 
-    public function index()
+    // Đã cập nhật để hỗ trợ Tìm kiếm và Phân trang
+    public function index($search = '', $limit = 5, $offset = 0)
     {
         $sql = "SELECT * FROM $this->table WHERE deleted_at is NULL";
+        $params = [];
+
+        if (!empty($search)) {
+            // Tìm kiếm theo tên, email hoặc số điện thoại
+            $sql .= " AND (name LIKE :search OR email LIKE :search OR phone LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+        
         $conn = $this->connect();
         $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Đếm tổng số bản ghi (dùng cho tính toán phân trang)
+    public function getTotalUsers($search = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM $this->table WHERE deleted_at is NULL";
+        $params = [];
+
+        if (!empty($search)) {
+            $sql .= " AND (name LIKE :search OR email LIKE :search OR phone LIKE :search)";
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $conn = $this->connect();
+        $stmt = $conn->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'] ?? 0;
     }
 
     public function create($data = [])
